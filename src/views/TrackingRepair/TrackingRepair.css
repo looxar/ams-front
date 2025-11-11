@@ -1,0 +1,17 @@
+.pa-2 {
+    margin-top: 1%;
+    margin-left: 2%;
+    height: auto;
+    width: 96%;
+}
+ /* .elevation-2{
+    font-size: 0.2em !important;
+}  */
+
+.grid-item {
+    background-color: rgba(000, 255, 255, 0.8);
+    border: 2px solid rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    font-size: 1.05em !important;
+    text-align: left;
+  }

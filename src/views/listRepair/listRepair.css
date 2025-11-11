@@ -1,0 +1,51 @@
+.pa-2 {
+    margin-top: 1%;
+    margin-left: 1%;
+    height: auto;
+    width: 98%;
+}
+.firstForm{
+    margin-top: 1%;
+    margin-left: 5%;
+    margin-right: 5%;
+    border: 0px solid rgba(255, 255, 255, 0.8);
+  } 
+.bodyForm{
+    margin-top: 1%;
+    margin-left: 5%;
+    margin-right: 5%;
+    border: 0px solid rgba(255, 255, 255, 0.8);
+  } 
+.new1{
+    border-top: 2px solid rgba(0, 0, 0, 0.8);
+  }
+.bodyBox1{
+  margin-left: 4%;
+  margin-right: 4%;
+  padding-top: 1%;
+  padding-bottom: 1%;
+  border: 1px solid rgba(0, 0, 0, 0.8);
+}
+.bodyBox2{
+  margin-left: 4%;
+  margin-right: 4%;
+  padding-top: 1%;
+  padding-bottom: 1%;
+  border: 1px solid rgba(0, 0, 0, 0.8);
+}
+.bodyBox3{
+  margin-left: 0%; 
+  width: 50%;
+  border: 0px solid rgba(0, 0, 0, 0.8);
+}
+.bodyBox4{
+  margin-left: 50%; 
+  width: 50%;
+  border: 0px solid rgba(0, 0, 0, 0.8);
+}
+.chkBeFor1{
+    margin-left: 3%;
+}
+.chkBeFor2{
+  margin-left: 80%;
+}

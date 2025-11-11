@@ -1,0 +1,75 @@
+table.v-table { border-collapse:collapse }
+/* 
+.label-checkbox {
+    margin-right: 0.5rem;
+    margin-left: auto;
+    border: 1px solid #4273DE;
+    box-sizing: border-box;
+    border-radius: 5px;
+    padding: 5px 5px;
+    text-align: center;
+    display: inline-block;
+
+    line-height: auto;
+    color: #4273DE;
+  } */
+
+/* .font-checkbox{
+    font-family: Roboto;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 1rem;
+} */
+
+.v-text-field-password{
+  width: 80%;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+}
+
+.centered-input input {
+  text-align: center;
+}
+
+.center {
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  display: flex;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.mytable table tr {
+  border-bottom: medium solid rgba(128,0,128,0.2);
+  border-spacing: 0 0.5rem;
+  
+}
+
+.mytable tbody td{
+  padding-left: 5px !important;
+  margin: 0 !important;
+  /* font-size: 1.2rem !important; */
+}
+
+.mytableReport tbody td:first-child{
+  padding-left: 5px !important;
+  margin: 0 !important;
+  /* font-size: 1.2rem !important; */
+  white-space: nowrap;
+}
+
+.theme--light.v-icon {
+  color: purple !important;
+}
+
+.style-1 {
+  background-color: rgba(128,0,128,0.2)
+}
+.style-2 {
+  background-color: rgba(250,128,0,0.2)
+}

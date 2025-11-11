@@ -1,0 +1,267 @@
+.show-select {
+  width: 3px;
+}
+
+.no-spacing {
+  table-layout: fixed;
+  width: 375px;
+  border-spacing: 2px; /* Removes the cell spacing via CSS */
+  border-collapse: collapse; /* Optional - if you don't want to have double border where cells touch */
+  /* padding: 0 !important; */
+  /* border: 1px solid black; */
+  word-wrap: break-word;
+}
+
+.text-pruple {
+  color: purple;
+}
+
+.mytable table tr {
+  border-bottom: medium solid rgba(128, 0, 128, 0.2);
+  border-spacing: 0;
+}
+
+.v-data-table .v-data-table-header tr th {
+  font-size: 1rem !important;
+  text-align: center !important;
+  padding: 0 !important;
+
+  margin: 0 !important;
+  white-space: nowrap;
+}
+
+.mytable tbody td {
+  padding: 0 !important;
+  margin: 0 !important;
+  /* font-size: 1.2rem !important; */
+}
+
+/* .theme--light.v-icon {
+  color: purple !important;
+} */
+
+/* .pdf_td {
+    min-width: 350px;
+  } */
+
+/* .html2pdf__page-break {
+    margin: 0 ;
+    margin-top: 20px !important;
+ } */
+
+.paddingBetweenRows td {
+  padding: 5px 5px 5px 5px;
+  vertical-align: top;
+  word-wrap: break-word;
+}
+
+/* .paddingBetweenRows table, th, td, tr
+{
+  border: 1px solid black;
+} */
+
+.wrap {
+  border-spacing: 3px;
+  /* max-width: 150px; */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.vue-treeselect__label {
+  font-size: 18px !important;
+}
+
+.vue-treeselect__menu {
+  font-size: 18px;
+}
+
+i.v-icon.v-white {
+  color: white !important;
+}
+
+.vue-treeselect.treeselect-invalid:not(.vue-treeselect--open)
+  .vue-treeselect__control {
+  border-color: purple;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.vue-treeselect.treeselect-invalid .vue-treeselect__single-value {
+  font-size: 18px !important;
+}
+
+.error-box {
+  margin-top: 8px;
+  color: red;
+  font-weight: bold;
+  background: #ffe5e5;
+  padding: 8px;
+  border: 1px solid red;
+  border-radius: 4px;
+}
+
+.v-progress-circular {
+  z-index: 999;
+}
+
+.chart-wrapper {
+  width: 100%; /* fill parent width */
+  height: 400px; /* default height */
+}
+@media (max-width: 600px) {
+  .chart-wrapper {
+    height: 250px; /* shrink on small screens */
+  }
+}
+
+.text-truncate {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.header-grid {
+  display: grid;
+  grid-template-columns: 30% 15% 20% 15% 15%;
+  align-items: center;
+  column-gap: 8px; /* optional */
+}
+
+.outlined-panels {
+  /*border: 1px solid rgba(128, 0, 128, 0.6);  purple border */
+  border-radius: 8px;
+}
+
+.outlined-panels .v-expansion-panel {
+  border-bottom: 1px solid rgba(128, 0, 128, 0.2); /* divider */
+}
+.outlined-panels .v-expansion-panel:last-child {
+  border-bottom: none;
+}
+
+.v-expansion-panels.custom-fill {
+  background-color: #f3e5f5; /* light purple */
+  border-radius: 8px;
+}
+
+.v-expansion-panel-header.custom-header {
+  background: linear-gradient(
+    to bottom,
+    #ffffff 50%,
+    #9519ca 150%,
+    purple 200%
+  );
+  color: white;
+}
+
+.v-chip.custom-regname {
+  background: linear-gradient(to bottom, #ffffff 60%, purple 200%) !important;
+  color: white;
+}
+
+.v-chip.custom-emptotal {
+  background: linear-gradient(to bottom, #ffffff 60%, red 200%) !important;
+  color: white;
+}
+
+.v-chip.custom-regtotal {
+  background: linear-gradient(to bottom, #ffffff 60%, indigo 200%) !important;
+  color: white;
+}
+
+.v-chip.custom-regnewer {
+  background: linear-gradient(to bottom, #ffffff 60%, #2e7d32 200%) !important;
+  color: white;
+}
+
+.v-chip.custom-regolder {
+  background: linear-gradient(to bottom, #ffffff 60%, #ffa000 200%) !important;
+  color: white;
+}
+
+.v-btn.custom-button {
+  background: linear-gradient(to bottom, #ffffff 60%, purple 200%) !important;
+  color: white;
+}
+
+.jump-highlight {
+  animation: jumpFlash 1.2s ease-out 1;
+}
+
+@keyframes jumpFlash {
+  0% {
+    background-color: rgba(255, 235, 59, 0.7);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.sticky {
+  position: sticky;
+  top: 64px;
+  z-index: 10;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid rgba(128, 0, 128, 0.4);
+  border-top: 1px solid rgba(128, 0, 128, 0.4);
+}
+
+.dept-split {
+  display: grid;
+  grid-template-columns: 30% 70%;
+  gap: 12px;
+}
+
+/* Column sizing (tweak as you like) */
+.col-devpeano { width: 180px; } /* wide enough for full Dev PEA No */
+.col-date     { width: 110px; }
+.col-tag      { width: 120px; }
+.col-emp      { width: 180px; }
+/* description takes remaining space */
+.col-desc     { width: auto; }
+
+
+.table-wrap th,
+.table-wrap td {
+  white-space: nowrap;
+  border: none;
+}
+
+.td-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.td-devpeano {
+  overflow: visible;     /* show full content */
+  text-overflow: clip;   /* no ellipsis */
+  white-space: nowrap;   /* stay on one line */
+}
+
+.pane-dev {
+  border-left: 3px solid rgb(128, 80, 128);
+  padding-left: 12px;
+}
+
+@media (max-width: 960px) {
+  .pane-dev {
+    border-left: none;
+    border-top: 3px solid rgb(128, 80, 128);
+    padding-left: 0;
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+}
+
+.table-wrap thead th {
+  border-bottom: 2px solid rgb(128, 80, 128); /* adjust thickness/color */
+}
