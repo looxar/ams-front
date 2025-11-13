@@ -45,7 +45,7 @@ export default {
         "ค่าเสื่อมสะสม",
         "มูลค่าตามบัญชี",
         "Pers.No.",
-        // "เลขที่ผลิตภัณฑ์",
+        "เลขที่ผลิตภัณฑ์",
         "Serial No.",
       ],
       tableItems: [],
@@ -59,30 +59,35 @@ export default {
         { text: "Left Price", value: "dev_left_price" },
         { text: "Received Date", value: "dev_received_date" },
       ],
-      loading: false,
+      // separated loading flags to avoid races
+      readLoading: false,
+      processLoading: false,
       isReadFileValid: false,
       uploadItems: [],
-      // headerMap: [
-      //   { สินทรัพย์: "devPeaNo" },
-      //   { คำอธิบายของสินทรัพย์: "devDescription" },
-      //   { เลขที่ผลิตภัณฑ์: "devSerialNo" },
-      //   { "Cap.date": "devReceivedDate" },
-      //   { มูลค่าการได้มา: "devReceivedPrice" },
-      //   { ค่าเสื่อมสะสม: "devLeftPrice" },
-      //   { "ศ.ต้นทุน": "ccLongCode" },
-      //   { "Pers.No.": "empId" },
-      // ],
+      uploadAbortController: null,
       headerMap: {
         สินทรัพย์: "devPeaNo",
         คำอธิบายของสินทรัพย์: "devDescription",
-        // เลขที่ผลิตภัณฑ์: "devSerialNo",
-        "Serial no.": "devSerialNo",
+        เลขที่ผลิตภัณฑ์: "devSerialNo",
         "Cap.date": "devReceivedDate",
         มูลค่าการได้มา: "devReceivedPrice",
-        มูลค่าตามบัญชี: "devLeftPrice",
-        "ศ.ต้นทุน": "ccLongCodeString",
-        "Pers.No.": "empIdString",
+        ค่าเสื่อมสะสม: "devLeftPrice",
+        "ศ.ต้นทุน": "ccLongCode",
+        "Pers.No.": "empId",
+        "SNo.": "SNo.",
+        "Serial No.": "devSerialNo",
       },
+      // headerMap: {
+      //   สินทรัพย์: "devPeaNo",
+      //   คำอธิบายของสินทรัพย์: "devDescription",
+      //   เลขที่ผลิตภัณฑ์: "devSerialNo",
+      //   "Serial no.": "devSerialNo",
+      //   "Cap.date": "devReceivedDate",
+      //   มูลค่าการได้มา: "devReceivedPrice",
+      //   มูลค่าตามบัญชี: "devLeftPrice",
+      //   "ศ.ต้นทุน": "ccLongCodeString",
+      //   "Pers.No.": "empIdString",
+      // },
       uploadFinish: false,
       uploadFinishtime: Date.now(),
       uploadSuccess: false,
@@ -139,13 +144,8 @@ export default {
       }
     },
     processReadFile() {
-      this.loading = true;
+      this.readLoading = true;
       this.uploadFinish = false;
-      console.log("loading state:", this.loading);
-      setTimeout(() => {
-        console.log("loading done");
-        this.loading = false;
-      }, 2000);
 
       console.log("XLSX", XLSX);
       if (!this.selectedFile) {
@@ -153,6 +153,7 @@ export default {
         setTimeout(() => {
           this.alert = false;
         }, 3000);
+        this.readLoading = false;
         return;
       }
 
@@ -162,7 +163,6 @@ export default {
 
       reader.onload = (e) => {
         const data = new Uint8Array(e.target.result);
-        console.log("check2 data", data);
         try {
           console.log("check5", XLSX.utils);
           const workbook = XLSX.read(data, { type: "array" });
@@ -250,8 +250,9 @@ export default {
             this.tableItems = previewRows.map((item) => ({
               devPeaNo: `${item["สินทรัพย์"] ?? ""}-${item["SNo."] ?? ""}`,
               dev_description: item["คำอธิบายของสินทรัพย์"] ?? "",
-              // dev_serial_no: item["เลขที่ผลิตภัณฑ์"] ?? "",
-              dev_serial_no: item["Serial no."] ?? "",
+              dev_serial_no:
+                item["เลขที่ผลิตภัณฑ์"] ?? item["Serial no."] ?? "",
+              // dev_serial_no: item["Serial no."] ?? "",
               emp_id: item["Pers.No."] ?? "",
               cc_long_code: item["ศ.ต้นทุน"] ?? "",
               dev_received_price: item["มูลค่าการได้มา"] ?? "",
@@ -277,6 +278,12 @@ export default {
                 row["SNo."] ?? ""
               }`.trim();
 
+              mapped.dev_serial_no =
+                row["เลขที่ผลิตภัณฑ์"] ??
+                row["Serial no."] ??
+                row["Serial No."] ??
+                "";
+
               for (const [thaiKey, backendKey] of Object.entries(
                 this.headerMap
               )) {
@@ -285,7 +292,7 @@ export default {
 
                 if (backendKey === "devReceivedDate") {
                   mapped[backendKey] = formatCapDate(value);
-                } else if (backendKey !== "devPeaNo") {
+                } else if (backendKey !== "devPeaNo" && backendKey !== "dev_serial_no") {
                   // Prevent overwriting custom mapping above
                   mapped[backendKey] = value;
                 }
@@ -294,13 +301,8 @@ export default {
             });
 
             this.uploadItems = mappedRecords;
-
-            console.log(
-              "uploadItems ",
-              this.uploadItems[Math.floor(mappedRecords.length / 2)]
-            );
             this.isReadFileValid = allValidRecords.length > 0;
-            this.loading = false;
+            this.readLoading = false;
           } else {
             console.warn("❌ Header row not found.");
             this.alert = true;
@@ -308,57 +310,80 @@ export default {
         } catch (error) {
           console.error("❌ Failed to read Excel file", error);
           this.alert = true;
+          this.readLoading = false;
         }
       };
 
       reader.onerror = (err) => {
         console.error("Failed to read file", err);
         this.alert = true;
+        this.readLoading = false;
       };
 
       reader.readAsArrayBuffer(this.selectedFile);
     },
 
-    uploadData() {
-      this.loading = true;
-      this.uploadFinish = false;
-      console.log("uploadItems.length ", this.uploadItems.length);
-      axios
-        .post(
-          `${process.env.VUE_APP_BASE_URL}/api/dev/temp_upload`,
-          this.uploadItems
-        )
-        .then((resp) => {
-          console.log("📦 Response:", resp.data);
-          this.loading = false;
-          const { success, message } = resp.data;
-          this.uploadFinish = true;
-          this.uploadFinishtime = dateService.formatDateToThai(new Date());
-          if (success) {
-            this.uploadSuccess = true;
-            console.log("📦 success result:", success);
-          } else {
-            this.uploadSuccess = false;
-            console.log("📦 success result:", success);
-            console.error("❌ error message uploadData:", message);
-          }
-        })
+    async uploadData() {
+      // if nothing to upload, ensure flags are consistent and return
+      if (!this.uploadItems || this.uploadItems.length === 0) {
+        console.warn("No upload items to send");
+        this.uploadFinish = true;
+        this.uploadSuccess = false;
+        this.processLoading = false; // <- ensure cleared
+        return;
+      }
 
-        .catch((error) => {
+      this.uploadAbortController = new AbortController();
+      this.processLoading = true;
+      this.uploadFinish = false;
+      console.log("uploadItems[0]", this.uploadItems[0]);
+      try {
+        const resp = await axios.post(
+          `${process.env.VUE_APP_BASE_URL}/api/dev/temp_upload`,
+          this.uploadItems,
+          {
+            timeout: 120000,
+            signal: this.uploadAbortController.signal,
+          }
+        );
+
+        console.log("📦 Response:", resp.data);
+        const { success, message } = resp.data;
+
+        this.uploadFinish = true;
+        this.uploadFinishtime = dateService.formatDateToThai(new Date());
+        this.uploadSuccess = !!success;
+
+        if (!success) {
+          console.error("❌ error message uploadData:", message);
+        } else {
+          console.log("📦 success result:", success);
+          // optional: clear the items to prevent accidental repeat uploads
+          this.uploadItems = [];
+        }
+      } catch (error) {
+        // detect cancellation
+        if (error?.code === "ERR_CANCELED" || error?.name === "CanceledError") {
+          console.warn("Upload cancelled by user");
+        } else {
           const message =
             error?.response?.data?.message ||
             error?.message ||
             "Unknown error occurred";
-
           console.error("❌ Upload failed:", error);
           console.error("❌ error message uploadData:", message);
-          this.loading = false;
-        });
+          this.uploadSuccess = false;
+        }
+        this.uploadFinish = true;
+      } finally {
+        this.processLoading = false;
+        this.uploadAbortController = null;
+      }
     },
 
     async processDB() {
       try {
-        this.loading = true;
+        this.processLoading = true;
         // Step 1
         const result1 = await this.queryStep1();
         console.log("Step 1 done:", result1);
@@ -386,9 +411,10 @@ export default {
         console.log("softDeletedCount:", this.softDeletedCount);
         // All steps done
 
-        this.loading = false;
+        this.processLoading = false;
       } catch (error) {
         console.error("Error during query steps:", error);
+        this.processLoading = false;
       }
     },
 
@@ -417,7 +443,7 @@ export default {
 
         console.error("❌ set concat failed:", error);
         console.error("❌ error message Step1:", message);
-        this.loading = false;
+        this.processLoading = false;
         throw error; // ❗ rethrow to allow processDB to handle it if needed
       }
     },
@@ -448,7 +474,7 @@ export default {
 
         console.error("❌ set concat failed:", error);
         console.error("❌ error message Step2:", message);
-        this.loading = false;
+        this.processLoading = false;
         throw error; // ❗ rethrow to allow processDB to handle it if needed
       }
     },
@@ -478,7 +504,7 @@ export default {
 
         console.error("❌ checking no match entries failed:", error);
         console.error("❌ error message Step3:", message);
-        this.loading = false;
+        this.processLoading = false;
         throw error; // ❗ rethrow to allow processDB to handle it if needed
       }
     },
@@ -509,13 +535,17 @@ export default {
 
         console.error("❌ insert or update to master failed:", error);
         console.error("❌ error message Step4:", message);
-        this.loading = false;
+        this.processLoading = false;
         throw error; // ❗ rethrow to allow processDB to handle it if needed
       }
     },
   },
 
   computed: {
+    // derived single "loading" used by UI
+    loading() {
+      return !!(this.readLoading || this.processLoading);
+    },
     isExcelFileValid() {
       if (!this.selectedFile) return false;
 
