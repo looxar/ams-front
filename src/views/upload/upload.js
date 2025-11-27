@@ -292,7 +292,10 @@ export default {
 
                 if (backendKey === "devReceivedDate") {
                   mapped[backendKey] = formatCapDate(value);
-                } else if (backendKey !== "devPeaNo" && backendKey !== "dev_serial_no") {
+                } else if (
+                  backendKey !== "devPeaNo" &&
+                  backendKey !== "dev_serial_no"
+                ) {
                   // Prevent overwriting custom mapping above
                   mapped[backendKey] = value;
                 }
@@ -342,7 +345,8 @@ export default {
           `${process.env.VUE_APP_BASE_URL}/api/dev/temp_upload`,
           this.uploadItems,
           {
-            timeout: 120000,
+            // timeout: 120000,
+            timeout: 30 * 60 * 1000,
             signal: this.uploadAbortController.signal,
           }
         );
@@ -402,9 +406,13 @@ export default {
         const result4 = await this.queryStep4();
         // this.noMatchTableItems = result3.data.items;
         // console.log("Step 4 done:", result4);
-        this.insertedCount = result4.data.insertedCount;
-        this.insertedCount2 = result4.data.insertedCount2;
-        this.softDeletedCount = result4.data.softDeletedCount;
+        // this.insertedCount = result4.data.insertedCount;
+        // this.insertedCount2 = result4.data.insertedCount2;
+        // this.softDeletedCount = result4.data.softDeletedCount;
+        this.insertedCount = result4.data.inserted_count;
+        this.insertedCount2 = result4.data.inserted_count2;
+        this.softDeletedCount = result4.data.soft_deleted_count;
+
         console.log("Step 4 done:", result4);
         console.log("insertedCount:", this.insertedCount);
         console.log("insertedCount2:", this.insertedCount2);
