@@ -85,20 +85,35 @@ export default {
     },
 
     regions() {
+      console.log("rows sample:", this.rows.slice(0, 3)); // 👈 check raw data
       const regionMap = new Map();
 
       for (const r of this.rows) {
-        // tag rows by year
-        r._tag = this.tagRowByYear(r);
+        const ccLongCodeRaw = r.ccLongCode || r.cc_long_code;
+        const ccShortName = r.ccShortName || r.cc_short_name || null;
+        const divisionCode = r.divisionCode || r.division_code || "UNKNOWN_DIV";
+        // const empId = r.empId ?? r.emp_id ?? null;
+        const devReceivedDate =
+          r.devReceivedDate || r.dev_received_date || null;
+
+        // tag rows by year (use normalized date)
+        r._tag = this.tagRowByYear({
+          ...r,
+          devReceivedDate, // pass normalized field if needed
+        });
 
         // region
-        // const regionKey = this.getRegionKey(r.ccLongCode);
-        const regionKey = this.getRegionKeyFromRow(r);
+        // region key (make sure getRegionKeyFromRow can handle this)
+        const regionKey = this.getRegionKeyFromRow({
+          ...r,
+          ccLongCode: ccLongCodeRaw,
+        });
+
         if (!regionMap.has(regionKey)) {
           regionMap.set(regionKey, {
             regionKey,
             regionLabel: null,
-            divisions: new Map(), // divisionCode -> division
+            divisions: new Map(),
             totalRecords: 0,
             newCount: 0,
             oldCount: 0,
@@ -107,19 +122,20 @@ export default {
           });
         }
         const reg = regionMap.get(regionKey);
+
         reg.totalRecords++;
         if (r._tag === "new") reg.newCount++;
         else if (r._tag === "old") reg.oldCount++;
         else reg.unknownCount++;
 
-        // division inside region (use the divisionCode already provided)
-        const divKey = r.divisionCode || "UNKNOWN_DIV";
+        // 🔹 division
+        const divKey = divisionCode;
         if (!reg.divisions.has(divKey)) {
           reg.divisions.set(divKey, {
             divisionCode: divKey,
             divisionCount: r.divisionCount ?? 0,
             departmentCount: r.departmentCount ?? 0,
-            departments: new Map(), // ccLongCode -> dept
+            departments: new Map(),
             totalRecords: 0,
             newCount: 0,
             oldCount: 0,
@@ -128,10 +144,12 @@ export default {
           });
         }
         const div = reg.divisions.get(divKey);
+
         div.totalRecords++;
         if (r._tag === "new") div.newCount++;
         else if (r._tag === "old") div.oldCount++;
         else div.unknownCount++;
+
         if (typeof r.divisionCount === "number")
           div.divisionCount = Math.max(div.divisionCount, r.divisionCount);
         if (typeof r.departmentCount === "number")
@@ -140,47 +158,49 @@ export default {
             r.departmentCount
           );
 
-        // keep max if counts vary
-        if (typeof r.divisionCount === "number") {
-          div.divisionCount = Math.max(div.divisionCount, r.divisionCount);
-        }
-        if (typeof r.departmentCount === "number") {
-          div.departmentCount = Math.max(
-            div.departmentCount,
-            r.departmentCount
-          );
-        }
-
-        const deptKeyRaw = r.ccLongCode || "UNKNOWN";
-        const deptKey = String(deptKeyRaw).toUpperCase().trim();
+        // 🔹 department key (use normalized ccLongCode)
+        const deptKey = ccLongCodeRaw
+          ? String(ccLongCodeRaw).toUpperCase().trim()
+          : "UNKNOWN";
 
         if (!div.departments.has(deptKey)) {
           div.departments.set(deptKey, {
             ccLongCode: deptKey,
-            ccShortName: r.ccShortName || null,
+            ccShortName, // use normalized short name
             items: [],
             newCount: 0,
             oldCount: 0,
             unknownCount: 0,
-            employees: [], // 👈 add these
+            employees: [],
             empCount: 0,
           });
         }
+
         const dept = div.departments.get(deptKey);
-        dept.items.push(r);
+        // if first row didn't have a name but later rows do, fill it in
+        if (!dept.ccShortName && ccShortName) {
+          dept.ccShortName = ccShortName;
+        }
+
+        dept.items.push({
+          ...r,
+          devReceivedDate, // keep normalized field for sorting later
+        });
 
         if (r._tag === "new") dept.newCount++;
         else if (r._tag === "old") dept.oldCount++;
         else dept.unknownCount++;
+
         if (dept.employees.length === 0) {
           const emps = this.empByCC.get(deptKey) || [];
           dept.employees = emps;
           dept.empCount = emps.length;
         }
 
+        // 🔹 use normalized empId when building ownerIds
         const ownerIds = new Set(
           (dept.items || [])
-            .map((r) => r.empId)
+            .map((row) => row.empId ?? row.emp_id)
             .filter((v) => v !== null && v !== undefined)
             .map((v) => String(v))
         );
@@ -245,7 +265,7 @@ export default {
                   }
                 }
               }
-              // ensure firstDept follows sorted order if not set
+
               const firstDeptDiv = div.firstDept || deptsArr[0] || null;
 
               console.log("divUnowned : ", divUnowned);
@@ -294,6 +314,13 @@ export default {
           }
 
           // console.log("regUnowned : ", regUnowned);
+          console.log("DEBUG region:", {
+            regionKey: reg.regionKey,
+            divisionsCount: divisionsArr.length,
+            firstDivision: divisionsArr[0],
+            regionFirstDept:
+              reg.firstDept || divisionsArr[0]?.departments?.[0] || null,
+          });
 
           return {
             ...reg,
@@ -307,62 +334,6 @@ export default {
           };
         })
         .sort((a, b) => String(a.regionKey).localeCompare(String(b.regionKey)));
-    },
-
-    overall() {
-      // Device totals
-      const totalRecords = this.rows.length;
-      // console.log("totalRecords-overall : ", totalRecords);
-      // New/Old/Unknown (use the same tag you assigned on rows)
-      let newCount = 0,
-        oldCount = 0,
-        unknownCount = 0;
-      const ownerIds = new Set(); // emId that appear in any row (owners)
-
-      for (const r of this.rows) {
-        const tag = r._tag; // 'new' | 'old' | 'unknown'
-        if (tag === "new") newCount++;
-        else if (tag === "old") oldCount++;
-        else unknownCount++;
-
-        if (r.emId !== null && r.emId !== undefined) {
-          ownerIds.add(String(r.emId));
-        }
-      }
-
-      // All employees (unique) from the employee API
-      const allEmpIds = new Set();
-      for (const e of this.itemsEmp || []) {
-        allEmpIds.add(String(e.empId));
-      }
-      console.log("allEmpIds",allEmpIds);
-
-      // Unowned employees (no devices anywhere)
-      const unownedIds = new Set();
-      for (const id of allEmpIds) {
-        if (!ownerIds.has(id)) unownedIds.add(id);
-      }
-      console.log("unownedIds",unownedIds);
-
-      // Optionally, build lists (if you want to render them)
-      const employeesById = new Map(
-        (this.itemsEmp || []).map((e) => [String(e.empId), e])
-      );
-      const unownedEmployees = Array.from(unownedIds)
-        .map((id) => employeesById.get(id))
-        .filter(Boolean);
-
-      return {
-        totalRecords,
-        newCount,
-        oldCount,
-        unknownCount,
-        // employees
-        empCount: allEmpIds.size, // unique employees overall
-        ownedEmpCount: ownerIds.size, // employees that have at least 1 device
-        unownedCount: unownedIds.size,
-        unownedEmployees, // optional: the list
-      };
     },
   },
 
@@ -390,7 +361,7 @@ export default {
         //   yearMonth: item[2],
         // }));
         this.rows = this.deviceByDep;
-        console.log(this.rows);
+        console.log("getCountDeviceByDep-rows", this.rows);
       } catch (error) {
         console.error(error);
       } finally {
@@ -495,7 +466,7 @@ export default {
           `${process.env.VUE_APP_BASE_URL}/cc/getAllCCOnlyUse`
         );
         // this.itemsCC = response.data.costCenter;
-        console.log("itemsCC ", this.itemsCC);
+        console.log("itemsCC123: ", response);
         this.itemsCC = response.data.costCenter.map((item) => ({
           ccLongCode: item[0],
           ccShortName: item[1],
@@ -642,6 +613,56 @@ export default {
       if (!Number.isFinite(y)) return -Infinity;
       // BE compare works directly; bigger BE year = newer
       return y * 10000 + m * 100 + d; // e.g., 25680103
+    },
+
+    overall() {
+      const totalRecords = this.rows.length;
+      let newCount = 0,
+        oldCount = 0,
+        unknownCount = 0;
+      const ownerIds = new Set();
+
+      for (const r of this.rows) {
+        const tag = r._tag; // 'new' | 'old' | 'unknown'
+        if (tag === "new") newCount++;
+        else if (tag === "old") oldCount++;
+        else unknownCount++;
+
+        if (r.emId !== null && r.emId !== undefined) {
+          ownerIds.add(String(r.emId));
+        }
+      }
+
+      const allEmpIds = new Set();
+      for (const e of this.itemsEmp || []) {
+        allEmpIds.add(String(e.empId));
+      }
+      console.log("allEmpIds", allEmpIds);
+
+      const unownedIds = new Set();
+      for (const id of allEmpIds) {
+        if (!ownerIds.has(id)) unownedIds.add(id);
+      }
+      console.log("unownedIds", unownedIds);
+
+      const employeesById = new Map(
+        (this.itemsEmp || []).map((e) => [String(e.empId), e])
+      );
+      const unownedEmployees = Array.from(unownedIds)
+        .map((id) => employeesById.get(id))
+        .filter(Boolean);
+
+      return {
+        totalRecords,
+        newCount,
+        oldCount,
+        unknownCount,
+        // employees
+        empCount: allEmpIds.size, // unique employees overall
+        ownedEmpCount: ownerIds.size, // employees that have at least 1 device
+        unownedCount: unownedIds.size,
+        unownedEmployees, // optional: the list
+      };
     },
   },
 };
