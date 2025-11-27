@@ -2,3 +2,7 @@ node_modules
 dist
 
 *.history
+
+*.env
+
+*.env.production
