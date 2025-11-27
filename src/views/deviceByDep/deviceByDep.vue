@@ -425,11 +425,6 @@
 
                           <!-- Keep it simple for now: a compact table of rows in this division -->
                           <div class="pane pane-dev">
-                            <!-- <div class="pane-title">
-                              ครุภัณฑ์
-                              <b class="black--text">{{ dept.items.length }}</b>
-                              รายการ
-                            </div> -->
                             <div class="table-wrap">
                               <v-simple-table dense>
                                 <colgroup>
@@ -450,18 +445,24 @@
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  <tr
+                                  <!-- <tr
                                     v-for="row in dept.items"
                                     :key="`${row.deviceId}-${dept.ccLongCode}`"
+                                  > -->
+                                  <tr
+                                    v-for="row in dept.items"
+                                    :key="`${row.device_id || row.deviceId}-${
+                                      dept.ccLongCode
+                                    }`"
                                   >
                                     <td class="td-devpeano">
-                                      {{ row.devPeaNo }}
+                                      {{ row.devPeaNo || row.dev_pea_no }}
                                     </td>
                                     <td class="td-ellipsis">
-                                      {{ row.devDescription }}
+                                      {{ row.devDescription || row.dev_description }}
                                     </td>
                                     <td class="td-ellipsis">
-                                      {{ row.devReceivedDate }}
+                                      {{ row.devReceivedDate || row.dev+recieved_date}}
                                     </td>
                                     <td class="td-ellipsis">
                                       <v-chip
@@ -485,7 +486,7 @@
                                       </v-chip>
                                     </td>
                                     <td class="td-ellipsis">
-                                      {{ row.empName }}
+                                      {{ row.empName || row.emp_name }}
                                     </td>
                                   </tr>
                                 </tbody>
