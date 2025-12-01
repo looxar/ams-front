@@ -207,7 +207,7 @@ i.v-icon.v-white {
 
 .sticky {
   position: sticky;
-  top: 64px;
+  top: 50px;
   z-index: 10;
   background: #fff;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);

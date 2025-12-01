@@ -153,7 +153,7 @@
         </v-row>
       </v-card-text>
 
-      <v-card-text class="px-12 mx-4 search-panel sticky">
+      <v-card-text class="px-12 py-0 mx-3 sticky">
         <v-form v-model="valid">
           <v-row>
             <v-col cols="12" sm="2" md="2">
