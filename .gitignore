@@ -3,6 +3,7 @@ dist
 
 *.history
 
-*.env
-
-*.env.production
+.env
+.env.*.local
+.env.production.local
+.env.development.local
