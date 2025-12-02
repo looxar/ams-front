@@ -7,7 +7,8 @@ import Tracking from "../views/TrackingRepair/TrackingRepair.vue";
 // import repairForm from '../views/repairForm/repairForm.vue'
 // import ListRepair from '../views/listRepair/listRepair.vue'
 import checkQuota from "../views/checkQuota/checkQuota.vue";
-import Upload from "../views/upload/upload.vue";
+import uploadDevice from "../views/uploadDevice/uploadDevice.vue";
+import uploadCC from "../views/uploadCC/uploadCC.vue";
 import cost60 from "../views/cost60/cost60.vue";
 // import login from '../views/logIn/logIn.vue'
 // import preRepairComponent from '../views/preRepair/preRepair.vue'
@@ -74,9 +75,14 @@ const routes = [
     component: checkQuota,
   },
   {
-    path: "/upload",
-    name: "upload",
-    component: Upload,
+    path: "/uploadDevice",
+    name: "uploadDevice",
+    component: uploadDevice,
+  },
+    {
+    path: "/uploadCC",
+    name: "uploadCC",
+    component: uploadCC,
   },
   {
     path: "/cost60",

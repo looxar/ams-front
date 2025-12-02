@@ -126,6 +126,7 @@
           </v-col>
         </v-row>
       </div>
+      
       <v-divider class="my-4"></v-divider>
       <div>
         <v-row>
@@ -183,8 +184,8 @@
   </v-container>
 </template>
 
-<script src="./upload.js"></script>
-<style src="./upload.css"></style>
+<script src="./uploadDevice.js"></script>
+<style src="./uploadDevice.css"></style>
 <link
   rel="stylesheet"
   href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,100,0,0"
