@@ -34,7 +34,7 @@ export default {
       selectedFile: null,
       fileName: "",
 
-      tableItemsCC: [],
+      tableItemsEmp: [],
       readLoading: false,
       processLoading: false,
       isReadFileValid: false,
@@ -44,38 +44,24 @@ export default {
       uploadFinishtime: Date.now(),
       uploadSuccess: false,
 
-      expectedHeaders: [
-        "CCA",
-        "Level1",
-        "Level2",
-        "Level3",
-        "Level4",
-        "Level5",
-        "Level6",
-        "Node Description",
-        "BA",
-        "PCA",
-        "ชื่อ",
-        "Extra Long Text",
+      tableHeadersEmp: [
+        { text: "รหัสพนักงาน", value: "emp_id" }, //columnB
+        { text: "ชื่อ-นามสกุล", value: "emp_name" }, //columnC
+        { text: "ตำแหน่ง", value: "emp_rank" }, //columnD
+        { text: "สังกัด", value: "cc_short_name" }, //columnF
+        { text: "รหัสต้นสังกัด", value: "cc_full_code" }, //columnG
       ],
-      tableHeadersCC: [
-        { text: "CCA", value: "cc_long_code" },
-        { text: "BA", value: "bus_a" },
-        { text: "PCA", value: "profit_code" },
-        { text: "short_name", value: "cc_short_name" }, //"ชื่อ"
-        { text: "full_name", value: "cc_full_name" }, //"Extra Long Text"
-      ],
-
-      inserted: 0,
-      updated: 0,
     };
   },
+
+  mounted() {},
 
   methods: {
     triggerFileSelect() {
       console.log("triggerFileSelect called");
       this.$refs.fileInput.click();
     },
+
     onFileSelected(event) {
       const file = event.target.files[0];
       if (file) {
@@ -135,85 +121,74 @@ export default {
 
           console.log("check4", worksheet);
 
+          // 🧾 Read as 2D array (no header row)
           const rows = XLSX.utils.sheet_to_json(worksheet, {
-            header: 1,
-            defval: "",
+            header: 1, // => [ [row1], [row2], ... ]
+            defval: "", // default value for empty cells
           });
           console.log("✅ rows", rows);
 
-          const headerRowIndex = rows.findIndex((row) => {
+          // === CONFIG: mapping column index (0-based) ===
+          const START_DATA_ROW = 0; // change if you need to skip some top rows
+          const COL_EMP_ID = 1; // column B
+          const COL_EMP_NAME = 2; // column C
+          const COL_EMP_RANK = 3; // column D
+          const COL_CC_SHORT_NAME = 5; // column F
+          const COL_CC_FULL_CODE = 6; // column G
+
+          // 1) ตัดแถวที่เป็นข้อมูลจริง (ตัดแถวว่างออก)
+          const dataRows = rows.slice(START_DATA_ROW).filter((row) => {
             if (!Array.isArray(row)) return false;
-
-            const nonEmptyCells = row.filter(
-              (col) => String(col).trim() !== ""
-            ).length;
-            if (nonEmptyCells === 0) return false; // 🚫 Skip completely empty rows
-
-            const matchCount = row.reduce((count, col) => {
-              const trimmed = String(col).trim();
-              return this.expectedHeaders.includes(trimmed) ? count + 1 : count;
-            }, 0);
-
-            return matchCount >= this.expectedHeaders.length / 2;
+            // ตัดทิ้งแถวที่ว่างทั้งหมด
+            const hasNonEmpty = row.some((cell) => String(cell).trim() !== "");
+            return hasNonEmpty;
           });
 
-          if (headerRowIndex !== -1) {
-            const headerRow = rows[headerRowIndex];
-            console.log(
-              "✅ Found header row at index",
-              headerRowIndex,
-              headerRow
-            );
-            const HEADER_ROW_INDEX = headerRowIndex;
-            const dataRows = rows.slice(headerRowIndex + 1);
-            const size = dataRows.length;
-            const DISPLAY_LIMIT = 1000;
-            const DISPLAY_START = Math.max(
-              0,
-              Math.floor(size / 2 - DISPLAY_LIMIT / 2)
-            );
+          console.log("✅ dataRows", dataRows);
 
-            const headers = rows[HEADER_ROW_INDEX].map((h) => h.trim());
+          // 2) map เป็น object ตาม key ที่ใช้ใน tableHeadersCC
+          const allRecords = dataRows.map((row) => {
+            const safe = (val) => String(val ?? "").trim();
 
-            const allValidRecords = dataRows
-              .filter((row) => {
-                const ccIndex = headers.findIndex((h) => h === "CCA");
-                if (ccIndex === -1) return false;
-                const isEmptyRow = row.every(
-                  (cell) => String(cell).trim() === ""
-                );
-                const hasAssetValue =
-                  row[ccIndex] && String(row[ccIndex]).trim() !== "";
-                return !isEmptyRow && hasAssetValue;
-              })
-              .map((row) => {
-                const record = {};
-                headers.forEach((header, index) => {
-                  record[header] = row[index] ?? "";
-                });
-                return record;
-              });
+            return {
+              emp_id: safe(row[COL_EMP_ID]),
+              emp_name: safe(row[COL_EMP_NAME]),
+              emp_rank: safe(row[COL_EMP_RANK]),
+              cc_short_name: safe(row[COL_CC_SHORT_NAME]),
+              cc_full_code: safe(row[COL_CC_FULL_CODE]),
+            };
+          });
 
-            const previewRows = allValidRecords.slice(
-              DISPLAY_START,
-              DISPLAY_START + DISPLAY_LIMIT
-            );
+          // 3) preview limit (ถ้าข้อมูลเยอะ)
+          const size = allRecords.length;
+          const DISPLAY_LIMIT = 1000;
+          const DISPLAY_START = Math.max(
+            0,
+            Math.floor(size / 2 - DISPLAY_LIMIT / 2)
+          );
 
-            this.tableItemsCC = previewRows.map((item) => ({
-              cc_long_code: item["CCA"] ?? "",
-              bus_a: item["BA"] ?? "",
-              profit_code: item["PCA"] ?? "",
-              cc_short_name: item["ชื่อ"] ?? "",
-              cc_full_name: item["Extra Long Text"] ?? "",
-            }));
+          const previewRows = allRecords.slice(
+            DISPLAY_START,
+            DISPLAY_START + DISPLAY_LIMIT
+          );
 
-            this.uploadItems = allValidRecords;
-            this.isReadFileValid = allValidRecords.length > 0;
-            this.readLoading = false;
-          } else {
-            console.warn("❌ Header row not found.");
-            this.alert = true;
-          }
+          // 👉 ใช้กับ v-data-table: headers.value ต้องตรงกับ key ใน object
+          this.tableItemsEmp = previewRows; // [{emp_id, emp_name, ...}, ...]
+
+          // ถ้าจะส่ง backend ใช้ allRecords
+          this.uploadItems = allRecords;
+
+          this.isReadFileValid = allRecords.length > 0;
+          this.readLoading = false;
+
+          // 👉 ใช้กับ v-data-table: headers.value ต้องตรงกับ key ใน object
+          this.tableItemsEmp = previewRows; // [{emp_id, emp_name, ...}, ...]
+
+          // ถ้าจะส่ง backend ใช้ allRecords
+          this.uploadItems = allRecords;
+
+          this.isReadFileValid = allRecords.length > 0;
+          this.readLoading = false;
         } catch (error) {
           console.error("❌ Failed to read Excel file", error);
           this.alert = true;
@@ -231,7 +206,6 @@ export default {
     },
 
     async uploadData() {
-
       if (!this.selectedFile) {
         console.warn("No file selected");
         this.uploadFinish = true;
@@ -271,7 +245,6 @@ export default {
         this.uploadSuccess = true;
 
         console.log("✅ Inserted:", inserted, "Updated:", updated);
-
       } catch (error) {
         // detect cancellation
         if (error?.code === "ERR_CANCELED" || error?.name === "CanceledError") {
@@ -295,18 +268,16 @@ export default {
     async fetchCCDB() {
       this.readLoading = true;
       try {
-        const resp = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/cc/all`
-        );
+        const resp = await axios.get(`${process.env.VUE_APP_BASE_URL}/cc/all`);
 
         console.log("📦 Fetch CC DB Response:", resp.data);
 
-        this.tableItemsCC = resp.data.map((item) => ({
+        this.tableItemsEmp = resp.data.map((item) => ({
           cc_long_code: item.cc_long_code,
           bus_a: item.cc_bus_a,
           profit_code: item.cc_profit_code,
           cc_short_name: item.cc_short_name,
-          cc_full_name: item.cc_full_name,  
+          cc_full_name: item.cc_full_name,
         }));
 
         this.readLoading = false;
@@ -317,7 +288,6 @@ export default {
         this.readLoading = false;
       }
     },
-
     async previewExcelRows(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -337,7 +307,7 @@ export default {
       });
     },
   },
-  mounted() {},
+
   computed: {
     loading() {
       return !!(this.readLoading || this.processLoading);

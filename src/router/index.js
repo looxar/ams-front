@@ -9,6 +9,7 @@ import Tracking from "../views/TrackingRepair/TrackingRepair.vue";
 import checkQuota from "../views/checkQuota/checkQuota.vue";
 import uploadDevice from "../views/uploadDevice/uploadDevice.vue";
 import uploadCC from "../views/uploadCC/uploadCC.vue";
+import uploadEmp from "../views/uploadEmp/uploadEmp.vue";
 import cost60 from "../views/cost60/cost60.vue";
 // import login from '../views/logIn/logIn.vue'
 // import preRepairComponent from '../views/preRepair/preRepair.vue'
@@ -69,9 +70,6 @@ const routes = [
   {
     path: "/checkQuota",
     name: "checkQuota",
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
     component: checkQuota,
   },
   {
@@ -79,7 +77,7 @@ const routes = [
     name: "uploadDevice",
     component: uploadDevice,
   },
-    {
+  {
     path: "/uploadCC",
     name: "uploadCC",
     component: uploadCC,
@@ -93,6 +91,11 @@ const routes = [
     path: "/deviceByDep",
     name: "deviceByDep",
     component: deviceByDep,
+  },
+  {
+    path: "/uploadEmp",
+    name: "duploadEmp",
+    component: uploadEmp,
   },
 ];
 

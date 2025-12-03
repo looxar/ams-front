@@ -93,7 +93,6 @@
                 </v-row>
               </v-container>
             </v-col>
-
             <!-- <v-col cols="12" sm="3" md="1"> </v-col> -->
           </v-row>
         </v-form>
@@ -102,8 +101,8 @@
       <v-col cols="12" class="pa-0">
         <v-container fluid>
           <v-data-table
-            :headers="tableHeadersCC"
-            :items="tableItemsCC"
+            :headers="tableHeadersEmp"
+            :items="tableItemsEmp"
             class="elevation-5 mytable ma-0 pa-0 w-100"
             style="width: 100%"
             dense
@@ -111,7 +110,7 @@
           />
         </v-container>
       </v-col>
-      
+
       <div>
         <v-row>
           <v-col cols="12">
@@ -143,12 +142,13 @@
           </v-col>
         </v-row>
       </div>
+
     </v-layout>
   </v-container>
 </template>
 
-<script src="./uploadCC.js"></script>
-<style src="./uploadCC.css"></style>
+<script src="./uploadEmp.js"></script>
+<style src="./uploadEmp.css"></style>
 <link
   rel="stylesheet"
   href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,100,0,0"
