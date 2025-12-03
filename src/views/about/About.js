@@ -823,6 +823,7 @@ export default {
       showErrorProblem: false,
       showErrorInspector: false,
       showErrorDepHead: false,
+      initMountedBranch: "E3010",
     };
   },
 
@@ -838,11 +839,11 @@ export default {
   mounted() {
     this.myloadingvariable = true;
 
-    this.appendBranch = JSON.stringify({ branch: "E3010" });
-    console.log("appendBranch-mount, " + this.appendBranch);
+    console.log("initMountedBranch " + this.initMountedBranch);
 
     let params = {
-      region: "E301000000",
+      // region: "E3010",
+      region: this.initMountedBranch,
       setAssetType: 53,
     };
 
@@ -983,7 +984,8 @@ export default {
         // console.log("setAssetType ",this.setAssetType);
         let params = [];
         console.log("itemsPerPage", this.itemsPerPage);
-        //ถ้าไม่ใส่คำค้น
+        
+        //ถ้าไม่ใส่คำค้นA1
         if (this.textSearch.length == 0) {
           params = {
             region: selectedBranch.branch,
@@ -1031,7 +1033,8 @@ export default {
             });
           // }
         }
-        //ถ้าใส่คำค้น
+
+        //ถ้าใส่คำค้น A2
         else {
           params = {
             // page: 0,

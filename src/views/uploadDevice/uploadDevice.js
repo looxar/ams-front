@@ -71,7 +71,7 @@ export default {
         เลขที่ผลิตภัณฑ์: "devSerialNo",
         "Cap.date": "devReceivedDate",
         มูลค่าการได้มา: "devReceivedPrice",
-        ค่าเสื่อมสะสม: "devLeftPrice",
+        มูลค่าตามบัญชี: "devLeftPrice",
         "ศ.ต้นทุน": "ccLongCode",
         "Pers.No.": "empId",
         "SNo.": "SNo.",
@@ -287,6 +287,8 @@ export default {
                 row["Serial no."] ??
                 row["Serial No."] ??
                 "";
+
+              mapped.dev_left_price = row["มูลค่าตามบัญชี"] ?? "";
 
               for (const [thaiKey, backendKey] of Object.entries(
                 this.headerMap

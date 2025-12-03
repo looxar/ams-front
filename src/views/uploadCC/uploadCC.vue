@@ -32,7 +32,7 @@
         />
         <v-form>
           <v-row>
-            <v-col cols="12" sm="none" md="2"> </v-col>
+            <v-col cols="12" sm="none" md="1"> </v-col>
             <v-col cols="12" sm="4" md="2">
               <v-container fluid>
                 <v-row class="mt-2">
@@ -61,7 +61,7 @@
               </v-container>
             </v-col>
 
-            <v-col cols="12" sm="3" md="1">
+            <v-col cols="12" sm="3" md="2">
               <v-container>
                 <v-row class="mt-2">
                   <v-btn
@@ -78,9 +78,23 @@
               </v-container>
             </v-col>
 
-            <v-col cols="12" sm="3" md="2"> </v-col>
+            <v-col cols="12" sm="3" md="2">
+              <v-container>
+                <v-row class="mt-2">
+                  <v-btn
+                    elevation="3"
+                    @click="fetchCCDB"
+                    id="uploadButton"
+                    color="primary"
+                  >
+                    <v-icon medium class="mr-2 v-white"> mdi-magnify </v-icon>
+                    Fetch CC DB</v-btn
+                  >
+                </v-row>
+              </v-container>
+            </v-col>
 
-            <v-col cols="12" sm="3" md="1"> </v-col>
+            <!-- <v-col cols="12" sm="3" md="1"> </v-col> -->
           </v-row>
         </v-form>
       </div>
@@ -120,7 +134,7 @@
           <v-col cols="12">
             <div v-if="uploadSuccess" class="">
               <div>Upload finish {{ uploadFinishtime }}</div>
-              <div>Inserted: {{inserted}} Updated: {{updated}}</div>
+              <div>Inserted: {{ inserted }} Updated: {{ updated }}</div>
             </div>
             <div v-if="!uploadSuccess" class="">
               Upload failed {{ uploadFinishtime }}

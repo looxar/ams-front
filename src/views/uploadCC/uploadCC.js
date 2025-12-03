@@ -252,6 +252,10 @@ export default {
       this.processLoading = true;
       this.uploadFinish = false;
       //   console.log("uploadItems[0]", this.uploadItems[0]);
+
+      console.log("📄 Previewing 5 rows from Excel...");
+      const preview = await this.previewExcelRows(this.selectedFile);
+      console.table(preview);
       try {
         const formData = new FormData();
         formData.append("file", this.selectedFile);
@@ -304,6 +308,47 @@ export default {
         this.processLoading = false;
         this.uploadAbortController = null;
       }
+    },
+
+    async fetchCCDB() {
+      this.readLoading = true;
+      try {
+        // const resp = await axios.post(
+        //   `${process.env.VUE_APP_BASE_URL}/cc/upload_cc`,
+        //   formData,
+        //   {
+        //     timeout: 30 * 60 * 1000,
+        //     signal: this.uploadAbortController.signal,
+        //     headers: { "Content-Type": "multipart/form-data" },
+        //   }
+        // );
+
+        this.readLoading = false;
+      } catch (error) {
+        this.readLoading = false;
+        console.error("❌ Fetch CC DB failed:", error);
+      } finally {
+        this.readLoading = false;
+      }
+    },
+
+    async previewExcelRows(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const data = new Uint8Array(event.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+
+          const json = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // raw rows
+
+          resolve(json.slice(0, 5)); // return first 5 rows
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
     },
   },
   mounted() {},
