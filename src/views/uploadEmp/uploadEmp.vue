@@ -78,7 +78,7 @@
               </v-container>
             </v-col>
 
-            <v-col cols="12" sm="3" md="2">
+            <!-- <v-col cols="12" sm="3" md="2">
               <v-container>
                 <v-row class="mt-2">
                   <v-btn
@@ -92,8 +92,10 @@
                   >
                 </v-row>
               </v-container>
-            </v-col>
+            </v-col> -->
+
             <!-- <v-col cols="12" sm="3" md="1"> </v-col> -->
+             
           </v-row>
         </v-form>
       </div>

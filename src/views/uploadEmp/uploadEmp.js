@@ -51,6 +51,9 @@ export default {
         { text: "สังกัด", value: "cc_short_name" }, //columnF
         { text: "รหัสต้นสังกัด", value: "cc_full_code" }, //columnG
       ],
+
+      inserted: 0,
+      updated: 0,
     };
   },
 
@@ -217,7 +220,6 @@ export default {
       this.uploadAbortController = new AbortController();
       this.processLoading = true;
       this.uploadFinish = false;
-      //   console.log("uploadItems[0]", this.uploadItems[0]);
 
       console.log("📄 Previewing 5 rows from Excel...");
       const preview = await this.previewExcelRows(this.selectedFile);
@@ -227,7 +229,7 @@ export default {
         formData.append("file", this.selectedFile);
 
         const resp = await axios.post(
-          `${process.env.VUE_APP_BASE_URL}/cc/upload_cc`,
+          `${process.env.VUE_APP_BASE_URL}/emp/upload_emp`,
           formData,
           {
             timeout: 30 * 60 * 1000,
@@ -240,13 +242,15 @@ export default {
 
         const { inserted, updated } = resp.data;
 
+        this.inserted = inserted ?? 0;
+        this.updated = updated ?? 0;
+
         this.uploadFinish = true;
         this.uploadFinishtime = dateService.formatDateToThai(new Date());
         this.uploadSuccess = true;
 
         console.log("✅ Inserted:", inserted, "Updated:", updated);
       } catch (error) {
-        // detect cancellation
         if (error?.code === "ERR_CANCELED" || error?.name === "CanceledError") {
           console.warn("Upload cancelled by user");
         } else {
