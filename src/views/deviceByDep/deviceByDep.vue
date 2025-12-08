@@ -20,7 +20,7 @@
 
       <v-card-text>
         <v-row>
-          <v-col cols="12" sm="4" md="4">
+          <v-col cols="12" sm="6" md="4">
             <div>
               <v-chip
                 large
@@ -36,7 +36,7 @@
               </v-chip>
             </div></v-col
           >
-          <v-col cols="12" sm="4" md="4">
+          <v-col cols="12" sm="6" md="4">
             <div>
               <v-chip
                 large
@@ -46,30 +46,122 @@
                 <v-icon medium class="mr-2" color="purple darken-2">
                   mdi-laptop </v-icon
                 >จำนวนคอมพิวเตอร์ทั้งหมด
-                <b class="ml-2"> {{ rows.length }} </b>
+                <b class="ml-2"> {{ totalDeviceCounts.total }} </b>
                 <span class="ml-2"> </span>รายการ
               </v-chip>
             </div>
           </v-col>
+
+          <v-col cols="12" sm="6" md="4">
+            <v-chip
+              large
+              class="pl-4 pr-4 purple--text text--darken-2 custom-regname"
+              style="font-size: 18px"
+            >
+              คอมใหม่: <b class="ml-1">{{ totalDeviceCounts.new }}</b>
+            </v-chip>
+            <v-chip
+              large
+              class="pl-4 pr-4 purple--text text--darken-2 custom-regname"
+              style="font-size: 18px"
+            >
+              คอมเก่า:
+              <b class="ml-1">{{ totalDeviceCounts.oldOrUnknown }}</b>
+            </v-chip>
+          </v-col>
         </v-row>
 
         <v-row>
-          <v-col cols="12" sm="12" md="12">
-            <div>
-              <v-chip
-                large
-                class="pl-4 pr-4 green--text text--darken-3 custom-regnewer"
-                style="font-size: 18px"
-              >
-                <v-icon medium class="mr-2" color="green darken-3">
-                  mdi-home-city </v-icon
-                >หน่วยงานที่จำนวนคอมพิวเตอร์เหมาะสมกับจำนวนพนักงาน
-                <b> </b>
-                <span class="ml-2"> </span>
-                แห่ง
-              </v-chip>
-            </div></v-col
-          >
+          <v-col cols="12" sm="12" md="6">
+            <v-chip
+              large
+              class="pl-4 pr-4 green--text text--darken-3 custom-regnewer"
+              style="font-size: 18px"
+            >
+              <v-icon medium class="mr-2" color="green darken-3">
+                mdi-home-city </v-icon
+              >แผนกที่จำนวนคอมพิวเตอร์เหมาะสมกับจำนวนพนักงาน
+              <b>
+                <span class="mx-2">{{ totalDeptCounts.ge }}</span>
+              </b>
+              แห่ง
+            </v-chip>
+          </v-col>
+          <v-col cols="12" sm="12" md="6">
+            <v-chip
+              large
+              class="pl-4 pr-4 red--text text--darken-2 custom-emptotal"
+              style="font-size: 18px"
+            >
+              <v-icon medium class="mr-2" color="red darken-2">
+                mdi-home-city </v-icon
+              >แผนกที่จำนวนคอมพิวเตอร์น้อยกว่าจำนวนพนักงาน
+              <b>
+                <span class="mx-2">{{ totalDeptCounts.lt }}</span>
+              </b>
+              แห่ง
+            </v-chip>
+          </v-col>
+        </v-row>
+
+        <v-row>
+          <v-col cols="12" sm="12" md="6">
+            <v-chip
+              large
+              class="pl-4 pr-4 green--text text--darken-3 custom-regnewer"
+              style="font-size: 18px"
+            >
+              <v-icon medium class="mr-2" color="green darken-3">
+                mdi-home-city
+              </v-icon>
+              แผนกที่ "คอมใหม่" (2561 - ปัจจุบัน) ≥ พนักงาน:
+              <b class="ml-1">{{ totalDeptCountsNew.ge }}</b>
+              แห่ง
+            </v-chip>
+          </v-col>
+          <v-col cols="12" sm="12" md="6">
+            <v-chip
+              large
+              class="pl-4 pr-4 warning--text text--darken-2 custom-regolder"
+              style="font-size: 18px"
+            >
+              <v-icon medium class="mr-2" color="warning darken-3">
+                mdi-home-city
+              </v-icon>
+              แผนกที่ "คอมใหม่" &lt; พนักงาน:
+              <b class="ml-1">{{ totalDeptCountsNew.lt }}</b>
+              แห่ง
+            </v-chip>
+          </v-col>
+                    <v-col cols="12" sm="12" md="6">
+            <v-chip
+              large
+              class="pl-4 pr-4 warning--text text--darken-2 custom-regolder"
+              style="font-size: 18px"
+            >
+              <v-icon medium class="mr-2" color="warning darken-3">
+                mdi-home-city
+              </v-icon>
+              จำนวนคอมใหม่ที่ "เกิน" จากจำนวนพนักงาน (รวมทุกแผนก):
+              <b class="ml-1">{{ totalDeptCountsNew.totalSurplus }}</b>
+              เครื่อง
+            </v-chip>
+          </v-col>
+                    <v-col cols="12" sm="12" md="6">
+            <v-chip
+              large
+              class="pl-4 pr-4 warning--text text--darken-2 custom-regolder"
+              style="font-size: 18px"
+            >
+              <v-icon medium class="mr-2" color="warning darken-3">
+                mdi-home-city
+              </v-icon>
+              <!-- This is NOT the number of employees without any computer — only those without a new one. -->
+              จำนวนพนักงานที่ยังไม่มีคอมพิวเตอร์ใหม่ (ขาดคอมใหม่) (รวมทุกแผนก):
+              <b class="ml-1">{{ totalDeptCountsNew.totalShortage }}</b>
+              เครื่อง
+            </v-chip>
+          </v-col>
         </v-row>
 
         <v-row>
@@ -87,26 +179,6 @@
                 <b class="ml-2"> {{ overall.unownedCount }} </b>
                 <span class="ml-2"> </span>
                 คน
-              </v-chip>
-            </div></v-col
-          >
-        </v-row>
-
-        <v-row>
-          <v-col cols="12" sm="12" md="12">
-            <div>
-              <v-chip
-                large
-                class="pl-4 pr-4 indigo--text text--darken-2 custom-regtotal"
-                style="font-size: 18px"
-              >
-                <v-icon medium class="mr-2" color="indigo darken-2">
-                  mdi-home-city </v-icon
-                >หน่วยงานที่จำนวนคอมพิวเตอร์มากกว่าจำนวนพนักงาน
-                (นับเฉพาะคอมพิวเตอร์ที่มีอายุไม่เกิน 7 ปี)
-                <b> </b>
-                <span class="ml-2"> </span>
-                แห่ง
               </v-chip>
             </div></v-col
           >
@@ -459,10 +531,16 @@
                                       {{ row.devPeaNo || row.dev_pea_no }}
                                     </td>
                                     <td class="td-ellipsis">
-                                      {{ row.devDescription || row.dev_description }}
+                                      {{
+                                        row.devDescription ||
+                                        row.dev_description
+                                      }}
                                     </td>
                                     <td class="td-ellipsis">
-                                      {{ row.devReceivedDate || row.dev+recieved_date}}
+                                      {{
+                                        row.devReceivedDate ||
+                                        row.dev + recieved_date
+                                      }}
                                     </td>
                                     <td class="td-ellipsis">
                                       <v-chip

@@ -31,6 +31,7 @@ export default {
       expandedRegions: [],
       expandedDivisions: [],
       expandedDepartments: {},
+
       rows: [],
       loading: false,
       deviceByDep: [],
@@ -48,6 +49,8 @@ export default {
       getEmployeeResult: [],
 
       highlightedCc: null,
+
+      overallSummary: null,
     };
   },
 
@@ -211,9 +214,6 @@ export default {
 
         dept.unownedEmployees = unowned;
         dept.unownedCount = unowned.length;
-
-        // console.log("unownedEmployees", dept.unownedEmployees);
-        // console.log("unownedCount", dept.unownedCount);
       }
 
       const beKey = this.beDateKey;
@@ -222,24 +222,87 @@ export default {
         .map((reg) => {
           const divisionsArr = Array.from(reg.divisions.values())
             .map((div) => {
+              // const deptsArr = Array.from(div.departments.values())
+              //   .map((d) => ({
+              //     ...d,
+              //     items: d.items.slice().sort((a, b) => {
+              //       const kb = beKey(b.devReceivedDate);
+              //       const ka = beKey(a.devReceivedDate);
+              //       if (kb !== ka) return kb - ka;
+
+              //       return String(b.deviceId).localeCompare(String(a.deviceId));
+              //     }),
+              //   }))
+              //   .sort((a, b) =>
+              //     String(a.ccLongCode).localeCompare(String(b.ccLongCode))
+              //   );
               const deptsArr = Array.from(div.departments.values())
-                .map((d) => ({
-                  ...d,
-                  // items: d.items.sort((a, b) =>
-                  //   String(a.deviceId).localeCompare(String(b.deviceId))
-                  // ),
-                  items: d.items.slice().sort((a, b) => {
-                    // Newest first
+                .map((d) => {
+                  const items = d.items.slice().sort((a, b) => {
                     const kb = beKey(b.devReceivedDate);
                     const ka = beKey(a.devReceivedDate);
                     if (kb !== ka) return kb - ka;
-                    // tie-breaker (optional): by deviceId desc/asc as you prefer
                     return String(b.deviceId).localeCompare(String(a.deviceId));
-                  }),
-                }))
+                  });
+
+                  const itemsCount = Array.isArray(items) ? items.length : 0;
+                  const empCount =
+                    typeof d.empCount === "number"
+                      ? d.empCount
+                      : Array.isArray(d.employees)
+                      ? d.employees.length
+                      : 0;
+
+                  const isItemRich = itemsCount >= empCount; // 🍰 key condition
+
+                  return {
+                    ...d,
+                    items,
+                    itemsCount,
+                    empCount,
+                    isItemRich,
+                    // department-level counts (0/1)
+                    deptItemGECount: isItemRich ? 1 : 0,
+                    deptItemLTCount: isItemRich ? 0 : 1,
+                  };
+                })
                 .sort((a, b) =>
                   String(a.ccLongCode).localeCompare(String(b.ccLongCode))
                 );
+
+              // // 👉 classify departments at DIVISION level
+              // const itemRichDepts = []; // items >= employees
+              // const itemPoorDepts = []; // items < employees
+
+              // for (const d of deptsArr) {
+              //   const itemsCount = Array.isArray(d.items) ? d.items.length : 0;
+              //   const empCount =
+              //     typeof d.empCount === "number"
+              //       ? d.empCount
+              //       : Array.isArray(d.employees)
+              //       ? d.employees.length
+              //       : 0;
+
+              //   if (itemsCount >= empCount) {
+              //     itemRichDepts.push(d);
+              //   } else {
+              //     itemPoorDepts.push(d);
+              //   }
+              // }
+
+              // division-level aggregates
+              const divDeptItemGECount = deptsArr.reduce(
+                (sum, d) => sum + (d.deptItemGECount || 0),
+                0
+              );
+              const divDeptItemLTCount = deptsArr.reduce(
+                (sum, d) => sum + (d.deptItemLTCount || 0),
+                0
+              );
+
+              // optional: arrays for this division only
+              const itemRichDepts = deptsArr.filter((d) => d.isItemRich);
+              const itemPoorDepts = deptsArr.filter((d) => !d.isItemRich);
 
               const seenUnownedDiv = new Set();
               const divUnowned = [];
@@ -277,6 +340,12 @@ export default {
                 empCount: seenDiv.size,
                 unownedEmployees: divUnowned,
                 unownedCount: seenUnownedDiv.size,
+
+                // 👇 NEW: division-level department counts
+                deptItemGECount: divDeptItemGECount,
+                deptItemLTCount: divDeptItemLTCount,
+                itemRichDepts,
+                itemPoorDepts,
               };
             })
             .sort((a, b) =>
@@ -294,6 +363,39 @@ export default {
               }
             }
           }
+
+          // // 👉 collect all departments in this region
+          // const allDeptsInRegion = divisionsArr.flatMap(
+          //   (dv) => dv.departments || []
+          // );
+
+          // // 👉 classify departments at REGION level
+          // const regionItemRichDepts = [];
+          // const regionItemPoorDepts = [];
+
+          // for (const d of allDeptsInRegion) {
+          //   const itemsCount = Array.isArray(d.items) ? d.items.length : 0;
+          //   const empCount =
+          //     typeof d.empCount === "number"
+          //       ? d.empCount
+          //       : Array.isArray(d.employees)
+          //       ? d.employees.length
+          //       : 0;
+
+          //   if (itemsCount >= empCount) {
+          //     regionItemRichDepts.push(d);
+          //   } else {
+          //     regionItemPoorDepts.push(d);
+          //   }
+          // }
+
+          // region-level department arrays
+          const regionItemRichDepts = divisionsArr.flatMap(
+            (dv) => dv.itemRichDepts || []
+          );
+          const regionItemPoorDepts = divisionsArr.flatMap(
+            (dv) => dv.itemPoorDepts || []
+          );
 
           const regionFirstDept =
             reg.firstDept || divisionsArr[0]?.departments?.[0] || null;
@@ -313,13 +415,30 @@ export default {
             }
           }
 
-          // console.log("regUnowned : ", regUnowned);
+          // 🔹 ADD THIS: sum division counts → region counts
+          const regionDeptItemGECount = divisionsArr.reduce(
+            (sum, dv) => sum + (dv.deptItemGECount || 0),
+            0
+          );
+          const regionDeptItemLTCount = divisionsArr.reduce(
+            (sum, dv) => sum + (dv.deptItemLTCount || 0),
+            0
+          );
+
           console.log("DEBUG region:", {
             regionKey: reg.regionKey,
             divisionsCount: divisionsArr.length,
             firstDivision: divisionsArr[0],
             regionFirstDept:
               reg.firstDept || divisionsArr[0]?.departments?.[0] || null,
+
+            // deptItemGECount: regionItemRichDepts.length,
+            // deptItemLTCount: regionItemPoorDepts.length,
+            itemRichDepts: regionItemRichDepts,
+            itemPoorDepts: regionItemPoorDepts,
+            // 👇 NEW: now each region has its own totals
+            deptItemGECount: regionDeptItemGECount,
+            deptItemLTCount: regionDeptItemLTCount,
           });
 
           return {
@@ -331,9 +450,145 @@ export default {
             empCount: seenReg.size,
             unownedEmployees: regUnowned,
             unownedCount: seenUnownedReg.size,
+
+            // // 👇 NEW: region-level department counts
+            // deptItemGECount: regionItemRichDepts.length,
+            // deptItemLTCount: regionItemPoorDepts.length,
+            itemRichDepts: regionItemRichDepts,
+            itemPoorDepts: regionItemPoorDepts,
+
+            // 👇 NEW: now each region has its own totals
+            deptItemGECount: regionDeptItemGECount,
+            deptItemLTCount: regionDeptItemLTCount,
           };
         })
         .sort((a, b) => String(a.regionKey).localeCompare(String(b.regionKey)));
+    },
+
+    allItemRichDepts() {
+      return this.regions.flatMap((reg) => reg.itemRichDepts || []);
+    },
+
+    allItemPoorDepts() {
+      return this.regions.flatMap((reg) => reg.itemPoorDepts || []);
+    },
+
+    // 🔹 Global totals for all departments in all regions
+    totalDeptCounts() {
+      let ge = 0; // items ≥ employees
+      let lt = 0; // items < employees
+
+      for (const reg of this.regions || []) {
+        ge += reg.deptItemGECount || 0;
+        lt += reg.deptItemLTCount || 0;
+      }
+
+      return {
+        ge, // number of departments with items ≥ employees
+        lt, // number of departments with items < employees
+        total: ge + lt, // total departments (with device data)
+      };
+    },
+
+    totalDeviceCounts() {
+      let newCount = 0;
+      let oldCount = 0; // will include 'old'
+      let unknownCount = 0; // will include 'unknown'
+
+      for (const r of this.rows || []) {
+        const devReceivedDate =
+          r.devReceivedDate || r.dev_received_date || null;
+
+        // 👉 compute tag on the fly, same logic as regions()
+        const tag = this.tagRowByYear({
+          ...r,
+          devReceivedDate,
+        });
+
+        if (tag === "new") newCount++;
+        else if (tag === "old") oldCount++;
+        else unknownCount++;
+      }
+
+      return {
+        new: newCount,
+        old: oldCount, // only old
+        unknown: unknownCount, // only unknown
+        oldOrUnknown: oldCount + unknownCount, // combined group
+        total: this.rows.length,
+      };
+    },
+
+    // 🔹 Global department summary based only on "new" devices
+    totalDeptCountsNew() {
+      let ge = 0; // items(new) >= employees
+      let lt = 0; // items(new) < employees
+
+      let totalSurplus = 0; // sum of (newItemsCount - empCount) where diff > 0
+      let totalShortage = 0; // sum of (empCount - newItemsCount) where diff < 0
+
+      const deptDiffs = []; // optional: per-department detail
+
+      for (const reg of this.regions || []) {
+        for (const div of reg.divisions || []) {
+          for (const dept of div.departments || []) {
+            const empCount =
+              typeof dept.empCount === "number"
+                ? dept.empCount
+                : Array.isArray(dept.employees)
+                ? dept.employees.length
+                : 0;
+
+            // count only NEW devices in this department
+            const newItemsCount = (dept.items || []).filter((item) => {
+              const devReceivedDate =
+                item.devReceivedDate || item.dev_received_date || null;
+
+              const tag = this.tagRowByYear({
+                ...item,
+                devReceivedDate,
+              });
+
+              return tag === "new";
+            }).length;
+
+            const diff = newItemsCount - empCount;
+
+            // classify department
+            if (diff >= 0) {
+              ge++;
+              totalSurplus += diff; // extra new devices
+            } else {
+              lt++;
+              totalShortage += -diff; // missing new devices
+            }
+
+            // keep per-department info (optional, but very useful)
+            deptDiffs.push({
+              regionKey: reg.regionKey,
+              regionLabel: reg.regionLabel,
+              divisionCode: div.divisionCode,
+              ccLongCode: dept.ccLongCode,
+              ccShortName: dept.ccShortName,
+              empCount,
+              newItemsCount,
+              diff, // positive = extra devices, negative = shortage
+            });
+          }
+        }
+      }
+
+      return {
+        ge, // แผนกที่ "คอมใหม่" เพียงพอกับพนักงาน
+        lt, // แผนกที่ "คอมใหม่" ไม่พอ
+        total: ge + lt, // ทั้งหมดที่มีข้อมูลพนักงาน
+        // 👉 global gap metrics
+        totalSurplus, // รวมจำนวน "คอมใหม่ที่เกินจากจำนวนพนักงาน" ทุกแผนก
+        totalShortage, // รวมจำนวน "คอมใหม่ที่ขาดจากจำนวนพนักงาน" ทุกแผนก
+
+        // 👉 optional: per-department details (you can use in a table)
+        deptDiffs,
+      };
     },
   },
 
@@ -516,11 +771,13 @@ export default {
     async loadAllData() {
       this.loading = true;
       await Promise.all([
-        this.loadEmpData(),
-        this.loadCCData(),
-        this.getCountDeviceByDep(),
-        this.overall(),
+        this.loadCCData(), //load cost_center for region to department data
+        this.loadEmpData(), // load employee data
+        this.getCountDeviceByDep(), // load device data
+        // this.overall(),
       ]);
+      this.overallSummary = this.overall();
+
       this.loading = false;
     },
 
@@ -616,6 +873,7 @@ export default {
     },
 
     overall() {
+      //จำนวนคอมพิวเตอร์ทั้งหมด
       const totalRecords = this.rows.length;
       let newCount = 0,
         oldCount = 0,
@@ -623,7 +881,14 @@ export default {
       const ownerIds = new Set();
 
       for (const r of this.rows) {
-        const tag = r._tag; // 'new' | 'old' | 'unknown'
+        const devReceivedDate =
+          r.devReceivedDate || r.dev_received_date || null;
+        // const tag = r._tag; // 'new' | 'old' | 'unknown'
+        const tag = this.tagRowByYear({
+          ...r,
+          devReceivedDate,
+        });
+
         if (tag === "new") newCount++;
         else if (tag === "old") oldCount++;
         else unknownCount++;
@@ -657,7 +922,7 @@ export default {
         newCount,
         oldCount,
         unknownCount,
-        // employees
+
         empCount: allEmpIds.size, // unique employees overall
         ownedEmpCount: ownerIds.size, // employees that have at least 1 device
         unownedCount: unownedIds.size,
