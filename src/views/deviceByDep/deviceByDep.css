@@ -265,3 +265,55 @@ i.v-icon.v-white {
 .table-wrap thead th {
   border-bottom: 2px solid rgb(128, 80, 128); /* adjust thickness/color */
 }
+
+.clickable-row {
+  cursor: pointer;
+}
+.clickable-row:hover {
+  background-color: rgba(224, 242, 241, 0.5); /* light teal */
+}
+
+.jump-highlight {
+  animation: jump-highlight 1s ease-in-out 0s 2;
+  background-color: rgba(255, 235, 59, 0.3); /* light yellow */
+}
+
+@keyframes jump-highlight {
+  0%   { background-color: rgba(255, 235, 59, 0.1); }
+  50%  { background-color: rgba(255, 235, 59, 0.6); }
+  100% { background-color: rgba(255, 235, 59, 0.1); }
+}
+
+.scroll-table-10 {
+  max-height: 320px; /* roughly ~10 rows + header, adjust as you like */
+  overflow-y: auto;
+}
+
+.selectable-item {
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.selectable-item:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.active {
+  background: rgba(63, 81, 181, 0.15); /* Indigo light */
+  font-weight: bold;
+}
+
+.summary-clickable {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.summary-clickable:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.summary-active {
+  background-color: rgba(63, 81, 181, 0.08); /* light indigo-ish */
+  font-weight: 500;
+}

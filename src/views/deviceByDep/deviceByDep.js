@@ -51,12 +51,21 @@ export default {
       highlightedCc: null,
 
       overallSummary: null,
+
+      surplusSearch: "",
+      showBackToTop: false,
+
+      deptViewMode: "all-ge",
+      deptViewModes: [
+        { value: "all-ge", label: "คอมทั้งหมด ≥ พนักงาน" },
+        { value: "all-lt", label: "คอมทั้งหมด < พนักงาน" },
+        { value: "new-ge", label: "คอมใหม่ ≥ พนักงาน" },
+        { value: "new-lt", label: "คอมใหม่ < พนักงาน" },
+      ],
     };
   },
 
   mounted() {
-    this.getCountDeviceByDep();
-
     this.loadAllData();
   },
 
@@ -590,6 +599,311 @@ export default {
         deptDiffs,
       };
     },
+
+    // 1) All employees that appear in the region/division/department tree
+    employeesInRegions() {
+      const idSet = new Set();
+      const list = [];
+
+      for (const reg of this.regions || []) {
+        for (const div of reg.divisions || []) {
+          for (const dept of div.departments || []) {
+            for (const e of dept.employees || []) {
+              const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
+
+              if (!idSet.has(key)) {
+                idSet.add(key);
+                list.push(e);
+              }
+            }
+          }
+        }
+      }
+
+      return {
+        idSet, // Set of IDs for quick lookup
+        list, // Unique employee objects that exist in regions() structure
+      };
+    },
+
+    // 2) Employees that exist in itemsEmp BUT never appear in any department in regions()
+    employeesMissingFromDepartments() {
+      const missing = [];
+      const { idSet } = this.employeesInRegions;
+
+      for (const e of this.itemsEmp || []) {
+        const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
+
+        if (!idSet.has(key)) {
+          missing.push(e);
+        }
+      }
+
+      return missing;
+    },
+
+    // 3) All owner IDs from device rows
+    deviceOwnerIds() {
+      const owners = new Set();
+
+      for (const r of this.rows || []) {
+        const id = r.empId ?? r.emp_id ?? r.emId ?? r.em_id ?? null;
+        if (id != null) owners.add(String(id));
+      }
+
+      return owners;
+    },
+
+    // 4) Employees that are in departments (regions tree) BUT do not own any device
+    employeesWithDeptButNoDevice() {
+      const result = [];
+      const owners = this.deviceOwnerIds;
+      const { list } = this.employeesInRegions;
+
+      for (const e of list) {
+        const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
+
+        if (!owners.has(key)) {
+          result.push(e);
+        }
+      }
+
+      return result;
+    },
+
+    employeesWithoutAnyDevice() {
+      const map = new Map();
+
+      // 1) employees whose dept never shows up in regions() (no devices in that dept)
+      for (const e of this.employeesMissingFromDepartments || []) {
+        const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
+        map.set(key, e);
+      }
+
+      // 2) employees in regions/departments but not owner of any device
+      for (const e of this.employeesWithDeptButNoDevice || []) {
+        const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
+        if (!map.has(key)) {
+          map.set(key, e);
+        }
+      }
+
+      return Array.from(map.values());
+    },
+
+    // All employees who own at least one OLD device
+    oldDeviceOwners() {
+      const owners = new Set();
+
+      for (const r of this.rows || []) {
+        const devReceivedDate =
+          r.devReceivedDate || r.dev_received_date || null;
+
+        const tag = this.tagRowByYear({
+          ...r,
+          devReceivedDate,
+        });
+
+        if (tag === "old") {
+          const id = r.empId ?? r.emp_id ?? r.emId ?? r.em_id;
+          if (id != null) owners.add(String(id));
+        }
+      }
+
+      return owners;
+    },
+
+    employeesWithoutAnyDevice_OwnOldDevice() {
+      const oldOwners = this.oldDeviceOwners;
+
+      return this.employeesWithoutAnyDevice.filter((e) =>
+        oldOwners.has(String(e.empId))
+      );
+    },
+
+    employeesWithoutAnyDevice_NoDeviceAtAll() {
+      const oldOwners = this.oldDeviceOwners;
+
+      return this.employeesWithoutAnyDevice.filter(
+        (e) => !oldOwners.has(String(e.empId))
+      );
+    },
+
+    deptNewDeviceStats() {
+      const result = [];
+
+      for (const reg of this.regions || []) {
+        for (const div of reg.divisions || []) {
+          for (const dept of div.departments || []) {
+            const empCount =
+              typeof dept.empCount === "number"
+                ? dept.empCount
+                : Array.isArray(dept.employees)
+                ? dept.employees.length
+                : 0;
+
+            const allItems = dept.items || [];
+            const allItemsCount = allItems.length;
+
+            // 🔹 count NEW devices in this department
+            let newItemsCount = 0;
+            const newOwnerIds = new Set();
+            const anyOwnerIds = new Set();
+
+            // for (const item of dept.items || []) {
+            for (const item of allItems) {
+              const devReceivedDate =
+                item.devReceivedDate || item.dev_received_date || null;
+
+              const tag = this.tagRowByYear({
+                ...item,
+                devReceivedDate,
+              });
+
+              const ownerId =
+                item.empId ?? item.emp_id ?? item.emId ?? item.em_id ?? null;
+
+              if (ownerId != null) {
+                anyOwnerIds.add(String(ownerId));
+                if (tag === "new") {
+                  newItemsCount++;
+                  newOwnerIds.add(String(ownerId));
+                }
+              }
+            }
+
+            // const diff = newItemsCount - empCount;
+            const diffAll = allItemsCount - empCount;
+            const diffNew = newItemsCount - empCount;
+
+            // 🔹 employees in this department without NEW device
+            const employeesWithoutNew = (dept.employees || []).filter((e) => {
+              const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
+              return !newOwnerIds.has(key);
+            });
+
+            // 🔹 employees in this department without ANY device
+            const employeesWithoutAny = (dept.employees || []).filter((e) => {
+              const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
+              return !anyOwnerIds.has(key);
+            });
+
+            result.push({
+              regionKey: reg.regionKey,
+              regionLabel: reg.regionLabel,
+              divisionCode: div.divisionCode,
+              ccLongCode: dept.ccLongCode,
+              ccShortName: dept.ccShortName,
+
+              empCount,
+              // 🔹 all devices
+              allItemsCount,
+              diffAll,
+              // 🔹 new devices
+              newItemsCount,
+              diffNew,
+
+              employeesWithoutNew,
+              employeesWithoutNewCount: employeesWithoutNew.length,
+
+              employeesWithoutAny,
+              employeesWithoutAnyCount: employeesWithoutAny.length,
+            });
+          }
+        }
+      }
+
+      return result;
+    },
+
+    deptsSurplusNewButNotEveryoneHasNew() {
+      return this.deptNewDeviceStats.filter(
+        (d) => d.diff > 0 && d.employeesWithoutNewCount > 0
+      );
+    },
+
+    deptsShortageNew() {
+      return this.deptNewDeviceStats.filter((d) => d.diff < 0);
+    },
+
+    filteredDeptsSurplusNew() {
+      const keyword = (this.surplusSearch || "").toLowerCase().trim();
+      const src = this.deptsSurplusNewButNotEveryoneHasNew || [];
+
+      if (!keyword) return src;
+
+      return src.filter((d) => {
+        const region = (d.regionLabel || d.regionKey || "").toLowerCase();
+        const div = (d.divisionCode || "").toLowerCase();
+        const code = (d.ccLongCode || "").toLowerCase();
+        const name = (d.ccShortName || "").toLowerCase();
+        return (
+          region.includes(keyword) ||
+          div.includes(keyword) ||
+          code.includes(keyword) ||
+          name.includes(keyword)
+        );
+      });
+    },
+
+    deptViewLabel() {
+      console.log("deptViewLabel : ",this.deptViewMode);
+      switch (this.deptViewMode) {
+        case "all-ge":
+          return "แผนกที่ “คอมทั้งหมด” เพียงพอหรือเกินจำนวนพนักงาน";
+        case "all-lt":
+          return "แผนกที่ “คอมทั้งหมด” ยังไม่เพียงพอกับจำนวนพนักงาน";
+        case "new-ge":
+          return "แผนกที่ “คอมใหม่ (≥ 2561)” เพียงพอหรือเกินจำนวนพนักงาน";
+        case "new-lt":
+          return "แผนกที่ “คอมใหม่ (≥ 2561)” ยังไม่เพียงพอกับจำนวนพนักงาน";
+        default:
+          return "";
+      }
+    },
+
+    // which metric to use in the table (all vs new)
+    deptMetricKey() {
+      return this.deptViewMode.startsWith("all") ? "all" : "new";
+    },
+
+    // base list per mode
+    deptBaseRows() {
+      const src = this.deptNewDeviceStats || [];
+      switch (this.deptViewMode) {
+        case "all-ge":
+          return src.filter((d) => d.diffAll >= 0);
+        case "all-lt":
+          return src.filter((d) => d.diffAll < 0);
+        case "new-ge":
+          return src.filter((d) => d.diffNew >= 0);
+        case "new-lt":
+          return src.filter((d) => d.diffNew < 0);
+        default:
+          return src;
+      }
+    },
+
+    // text filter on top of the base list
+    filteredDeptRows() {
+      const keyword = (this.surplusSearch || "").toLowerCase().trim();
+      const src = this.deptBaseRows;
+
+      if (!keyword) return src;
+
+      return src.filter((d) => {
+        const region = (d.regionLabel || d.regionKey || "").toLowerCase();
+        const div = (d.divisionCode || "").toLowerCase();
+        const code = (d.ccLongCode || "").toLowerCase();
+        const name = (d.ccShortName || "").toLowerCase();
+        return (
+          region.includes(keyword) ||
+          div.includes(keyword) ||
+          code.includes(keyword) ||
+          name.includes(keyword)
+        );
+      });
+    },
   },
 
   watch: {
@@ -601,6 +915,39 @@ export default {
   created() {},
 
   methods: {
+    async loadAllData() {
+      this.loading = true;
+      await Promise.all([
+        this.loadCCData(), //load cost_center for region to department data
+        this.loadEmpData(), // load employee data
+        this.getCountDeviceByDep(), // load device data
+        // this.overall(),
+      ]);
+      this.overallSummary = this.overall();
+      console.log(
+        "employeesMissingFromDepartments:",
+        this.employeesMissingFromDepartments
+      );
+      console.log("count:", this.employeesMissingFromDepartments.length);
+
+      console.log(
+        "employeesWithDeptButNoDevice:",
+        this.employeesWithDeptButNoDevice
+      );
+      console.log("count:", this.employeesWithDeptButNoDevice.length);
+
+      console.log("employeesWithoutAnyDevice:", this.employeesWithoutAnyDevice);
+      console.log("count:", this.employeesWithoutAnyDevice.length);
+
+      console.log(
+        "employeesWithoutAnyDevice_OwnOldDevice:",
+        this.employeesWithoutAnyDevice_OwnOldDevice
+      );
+      console.log("count:", this.employeesWithoutAnyDevice_OwnOldDevice.length);
+
+      this.loading = false;
+    },
+
     async getCountDeviceByDep() {
       this.loading = true;
       try {
@@ -768,19 +1115,6 @@ export default {
       console.log("modelCC update " + JSON.stringify(this.modelCC));
     },
 
-    async loadAllData() {
-      this.loading = true;
-      await Promise.all([
-        this.loadCCData(), //load cost_center for region to department data
-        this.loadEmpData(), // load employee data
-        this.getCountDeviceByDep(), // load device data
-        // this.overall(),
-      ]);
-      this.overallSummary = this.overall();
-
-      this.loading = false;
-    },
-
     jumpToCc(ccLongCode) {
       if (!ccLongCode) return;
       const target = String(ccLongCode).trim();
@@ -839,6 +1173,9 @@ export default {
           setTimeout(() => {
             this.highlightedCc = null;
           }, 1300);
+
+          this.showBackToTop = true;
+
           return true;
         }
         return false;
@@ -856,6 +1193,27 @@ export default {
           if (!scrollToTarget()) retryScroll();
         });
       });
+    },
+
+    // 👇 new method to go back to the suggested section
+    scrollBackToSuggestions() {
+      const el =
+        this.$refs.surplusSection || document.getElementById("surplus-section");
+
+      if (el) {
+        if (this.$vuetify && this.$vuetify.goTo) {
+          this.$vuetify.goTo(el, {
+            duration: 600,
+            offset: 80,
+            easing: "easeInOutCubic",
+          });
+        } else {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+
+      // optional: hide button after going back up
+      this.showBackToTop = false;
     },
 
     beDateKey(dateStr) {
@@ -928,6 +1286,33 @@ export default {
         unownedCount: unownedIds.size,
         unownedEmployees, // optional: the list
       };
+    },
+
+    // setDeptViewMode(mode) {
+    //   this.deptViewMode = mode;
+    // },
+
+    setDeptViewModeAndScroll(mode) {
+      this.deptViewMode = mode;
+
+      // scroll to the detailed table card (ref="surplusSection")
+      this.$nextTick(() => {
+        const el =
+          this.$refs.surplusSection ||
+          document.getElementById("surplus-section");
+
+        if (el) {
+          if (this.$vuetify && this.$vuetify.goTo) {
+            this.$vuetify.goTo(el, {
+              duration: 600,
+              offset: 80,
+              easing: "easeInOutCubic",
+            });
+          } else {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      });
     },
   },
 };

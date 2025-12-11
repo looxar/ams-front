@@ -18,7 +18,7 @@
         </v-alert>
       </div>
 
-      <v-card-text>
+      <!-- <v-card-text>
         <v-row>
           <v-col cols="12" sm="6" md="4">
             <div>
@@ -115,7 +115,7 @@
                 mdi-home-city
               </v-icon>
               แผนกที่ "คอมใหม่" (2561 - ปัจจุบัน) ≥ พนักงาน:
-              <b class="ml-1">{{ totalDeptCountsNew.ge }}</b>
+              <b class="mx-2">{{ totalDeptCountsNew.ge }}</b>
               แห่ง
             </v-chip>
           </v-col>
@@ -129,101 +129,444 @@
                 mdi-home-city
               </v-icon>
               แผนกที่ "คอมใหม่" &lt; พนักงาน:
-              <b class="ml-1">{{ totalDeptCountsNew.lt }}</b>
+              <b class="mx-2">{{ totalDeptCountsNew.lt }}</b>
               แห่ง
             </v-chip>
           </v-col>
-                    <v-col cols="12" sm="12" md="6">
+          <v-col cols="12" sm="12" md="6">
             <v-chip
               large
-              class="pl-4 pr-4 warning--text text--darken-2 custom-regolder"
+              class="pl-4 pr-4 green--text text--darken-2 custom-regnewer"
               style="font-size: 18px"
             >
-              <v-icon medium class="mr-2" color="warning darken-3">
-                mdi-home-city
+              <v-icon medium class="mr-2" color="green darken-3">
+                mdi-desktop-classic
               </v-icon>
-              จำนวนคอมใหม่ที่ "เกิน" จากจำนวนพนักงาน (รวมทุกแผนก):
-              <b class="ml-1">{{ totalDeptCountsNew.totalSurplus }}</b>
+              จำนวน “คอมใหม่ส่วนเกิน” ตามโครงสร้างแผนก:
+              <b class="mx-2">{{ totalDeptCountsNew.totalSurplus }}</b>
               เครื่อง
             </v-chip>
           </v-col>
-                    <v-col cols="12" sm="12" md="6">
+          <v-col cols="12" sm="12" md="6">
             <v-chip
               large
-              class="pl-4 pr-4 warning--text text--darken-2 custom-regolder"
+              class="pl-4 pr-4 red--text text--darken-2 custom-emptotal"
               style="font-size: 18px"
             >
-              <v-icon medium class="mr-2" color="warning darken-3">
-                mdi-home-city
+              <v-icon medium class="mr-2" color="red darken-3">
+                mdi-desktop-classic
               </v-icon>
-              <!-- This is NOT the number of employees without any computer — only those without a new one. -->
-              จำนวนพนักงานที่ยังไม่มีคอมพิวเตอร์ใหม่ (ขาดคอมใหม่) (รวมทุกแผนก):
-              <b class="ml-1">{{ totalDeptCountsNew.totalShortage }}</b>
+              This is NOT the number of employees without any computer — only those without a new one.
+              จำนวน “คอมใหม่ที่ยังขาดอยู่” ตามโครงสร้างแผนก:
+              <b class="mx-2">{{ totalDeptCountsNew.totalShortage }}</b>
               เครื่อง
             </v-chip>
           </v-col>
         </v-row>
 
         <v-row>
-          <v-col cols="12" sm="12" md="12">
-            <div>
-              <v-chip
-                large
-                class="pl-4 pr-4 red--text text--darken-2 custom-emptotal"
-                style="font-size: 18px"
-              >
-                <v-icon medium class="mr-2" color="red darken-2">
-                  mdi-account-hard-hat </v-icon
-                >พนักงานที่ยังใช้คอมพิวเตอร์เครื่องเก่าหรือยังไม่มีครอบครอง
-                (ควรได้รับจัดสรรเพิ่มเติม ตามหลักเกณฑ์)
-                <b class="ml-2"> {{ overall.unownedCount }} </b>
-                <span class="ml-2"> </span>
-                คน
-              </v-chip>
-            </div></v-col
-          >
+          <v-col cols="12" sm="12" md="6">
+            <v-chip
+              large
+              class="pl-4 pr-4 warning--text text--darken-3 custom-regolder"
+              style="font-size: 18px"
+            >
+              <v-icon medium class="mr-2" color="warning darken-3">
+                mdi-account-hard-hat
+              </v-icon>
+              พนักงานที่ยังไม่ได้ครอบครองคอมพิวเตอร์ใหม่ (2561 - ปัจจุบัน):
+              <b class="mx-2">{{ employeesWithoutAnyDevice.length }}</b>
+              คน
+            </v-chip>
+          </v-col>
         </v-row>
 
         <v-row>
-          <v-col cols="12" sm="12" md="12">
-            <div>
-              <v-chip
-                large
-                class="pl-4 pr-4 warning--text text--darken-2 custom-regolder"
-                style="font-size: 18px"
-              >
-                <v-icon medium class="mr-2" color="warning darken-2">
-                  mdi-account-hard-hat </v-icon
-                >พนักงานที่ยังใช้คอมพิวเตอร์เครื่องเก่าหรือยังไม่มีครอบครอง
-                (แต่แผนก/ต้นสังกัด มีจำนวนคอมพิวเตอร์เพียงพอ)
-                <b> </b>
-                <span class="ml-2"> </span>
-                คน
-              </v-chip>
-            </div></v-col
-          >
+          <v-col cols="12" sm="12" md="6">
+            <v-chip
+              large
+              class="pl-4 pr-4 green--text text--darken-3 custom-regnewer"
+              style="font-size: 18px"
+            >
+              <v-icon medium class="mr-2" color="green darken-3">
+                mdi-account-hard-hat
+              </v-icon>
+              พนักงานที่ ไม่มีคอมใหม่ แต่ ยังมีคอมเก่าอย่างน้อย 1 เครื่อง:
+              <b class="mx-2">{{
+                employeesWithoutAnyDevice_OwnOldDevice.length
+              }}</b>
+              คน
+            </v-chip>
+          </v-col>
         </v-row>
 
         <v-row>
-          <v-col cols="12" sm="12" md="12">
-            <div>
-              <v-chip
-                large
-                class="pl-4 pr-4 warning--text text--darken-2 custom-regolder"
-                style="font-size: 18px"
-              >
-                <v-icon medium class="mr-2" color="warning darken-2">
-                  mdi-account-hard-hat </v-icon
-                >พนักงานที่ยังใช้คอมพิวเตอร์เครื่องเก่าหรือยังไม่มีครอบครอง
-                (แต่หน่วยงานต้นสังกัด/กฟส.ต้นสังกัด มีจำนวนคอมพิวเตอร์เพียงพอ)
-                <b> </b>
-                <span class="ml-2"> </span>
-                คน
-              </v-chip>
-            </div></v-col
-          >
+          <v-col cols="12" sm="12" md="6">
+            <v-chip
+              large
+              class="pl-4 pr-4 red--text text--darken-3 custom-emptotal"
+              style="font-size: 18px"
+            >
+              <v-icon medium class="mr-2" color="red darken-3">
+                mdi-account-hard-hat
+              </v-icon>
+              พนักงานที่ไม่มีคอมพิวเตอร์เลย (ทั้งใหม่และเก่า):
+              <b class="mx-2">{{
+                employeesWithoutAnyDevice_NoDeviceAtAll.length
+              }}</b>
+              คน
+            </v-chip>
+          </v-col>
         </v-row>
-      </v-card-text>
+      </v-card-text> -->
+
+      <v-row dense>
+        <!-- Section 1: Departments -->
+        <v-col cols="12" md="4">
+          <v-card outlined>
+            <!-- <v-card-title class="subtitle-1 font-weight-bold"> -->
+            <v-card-title
+              class="subtitle-1 font-weight-bold d-flex align-center justify-space-between"
+            >
+              <!-- <v-icon left color="indigo">mdi-office-building</v-icon>
+              สถานะจำนวนคอมพิวเตอร์เทียบกับพนักงาน (ระดับแผนก) -->
+              <div class="d-flex align-center">
+                <v-icon left color="indigo">mdi-office-building</v-icon>
+                สถานะจำนวนคอมพิวเตอร์เทียบกับพนักงาน (ระดับแผนก)
+              </div>
+
+              <!-- Inline clickable selector -->
+              <!-- <v-list dense class="d-flex pa-0" style="gap: 8px">
+                <v-list-item
+                  v-for="mode in deptViewModes"
+                  :key="mode.value"
+                  @click="setDeptViewMode(mode.value)"
+                  class="px-2 py-1 selectable-item"
+                  :class="{ active: deptViewMode === mode.value }"
+                >
+                  <v-list-item-title>{{ mode.label }}</v-list-item-title>
+                </v-list-item>
+              </v-list> -->
+            </v-card-title>
+            <v-card-text>
+              <v-list dense>
+                <!-- clickable item1: all-ge -->
+                <v-list-item
+                  class="summary-clickable"
+                  :class="{ 'summary-active': deptViewMode === 'all-ge' }"
+                  @click="setDeptViewModeAndScroll('all-ge')"
+                >
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      แผนกที่ “คอมทั้งหมด” ≥ พนักงาน
+                    </v-list-item-title>
+                    <v-list-item-subtitle>
+                      (จำนวนคอมทุกปี เทียบจำนวนพนักงานในแผนก)
+                    </v-list-item-subtitle>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip color="green lighten-4">
+                      {{ totalDeptCounts.ge }} แผนก
+                    </v-chip>
+                  </v-list-item-action>
+                </v-list-item>
+
+                <!-- clickable item2: all-lt -->
+                <v-list-item
+                  class="summary-clickable"
+                  :class="{ 'summary-active': deptViewMode === 'all-lt' }"
+                  @click="setDeptViewModeAndScroll('all-lt')"
+                >
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      แผนกที่ “คอมทั้งหมด” &lt; พนักงาน
+                    </v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip color="red lighten-4">
+                      {{ totalDeptCounts.lt }} แผนก
+                    </v-chip>
+                  </v-list-item-action>
+                </v-list-item>
+
+                <v-divider class="my-2"></v-divider>
+
+                <!-- clickable item3: new-ge -->
+                <v-list-item
+                  class="summary-clickable"
+                  :class="{ 'summary-active': deptViewMode === 'new-ge' }"
+                  @click="setDeptViewModeAndScroll('new-ge')"
+                >
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      แผนกที่ “คอมใหม่ (≥ 2561)” ≥ พนักงาน
+                    </v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip color="teal lighten-4">
+                      {{ totalDeptCountsNew.ge }} แผนก
+                    </v-chip>
+                  </v-list-item-action>
+                </v-list-item>
+
+                <!-- clickable item4: new-lt -->
+                <v-list-item
+                  class="summary-clickable"
+                  :class="{ 'summary-active': deptViewMode === 'new-lt' }"
+                  @click="setDeptViewModeAndScroll('new-lt')"
+                >
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      แผนกที่ “คอมใหม่ (≥ 2561)” &lt; พนักงาน
+                    </v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip color="orange lighten-4">
+                      {{ totalDeptCountsNew.lt }} แผนก
+                    </v-chip>
+                  </v-list-item-action>
+                </v-list-item>
+
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <!-- Section 2: Device balance -->
+        <v-col cols="12" md="4">
+          <v-card outlined>
+            <v-card-title class="subtitle-1 font-weight-bold">
+              <v-icon left color="purple">mdi-laptop</v-icon>
+              ภาพรวมคอมพิวเตอร์และดุลยภาพคอมใหม่
+            </v-card-title>
+            <v-card-text>
+              <v-list dense>
+                <v-list-item>
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      จำนวนคอมพิวเตอร์ทั้งหมดในระบบ
+                    </v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip> {{ totalDeviceCounts.total }} เครื่อง </v-chip>
+                  </v-list-item-action>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      คอมพิวเตอร์ใหม่ (ปี 2561 – ปัจจุบัน)
+                    </v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip color="teal lighten-4">
+                      {{ totalDeviceCounts.new }} เครื่อง
+                    </v-chip>
+                  </v-list-item-action>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      คอมพิวเตอร์เก่าหรือไม่ทราบปี (≤ 2560 / ไม่ระบุ)
+                    </v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip color="grey lighten-3">
+                      {{ totalDeviceCounts.oldOrUnknown }} เครื่อง
+                    </v-chip>
+                  </v-list-item-action>
+                </v-list-item>
+
+                <!-- <v-divider class="my-2"></v-divider>
+
+                <v-list-item>
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      ตำแหน่งที่มี “คอมใหม่ส่วนเกิน” จากพนักงาน (รวมทุกแผนก)
+                    </v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip color="green lighten-4">
+                      {{ totalDeptCountsNew.totalSurplus }} ตำแหน่ง
+                    </v-chip>
+                  </v-list-item-action>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      ตำแหน่งที่ยัง “ขาดคอมใหม่” จากพนักงาน (รวมทุกแผนก)
+                    </v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip color="red lighten-4">
+                      {{ totalDeptCountsNew.totalShortage }} ตำแหน่ง
+                    </v-chip>
+                  </v-list-item-action>
+                </v-list-item> -->
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <!-- Section 3: Employees -->
+        <v-col cols="12" md="4">
+          <v-card outlined>
+            <v-card-title class="subtitle-1 font-weight-bold">
+              <v-icon left color="deep-orange">mdi-account-group</v-icon>
+              สถานะการครอบครองคอมพิวเตอร์ (ระดับพนักงาน)
+            </v-card-title>
+            <v-card-text>
+              <v-list dense>
+                <v-list-item>
+                  <v-list-item-content>
+                    <v-list-item-title> จำนวนพนักงานทั้งหมด </v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip> {{ itemsEmp.length }} คน </v-chip>
+                  </v-list-item-action>
+                </v-list-item>
+
+                <v-divider class="my-2"></v-divider>
+
+                <v-list-item>
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      พนักงานที่ยังไม่มีคอมพิวเตอร์ใหม่ (≥ 2561)
+                    </v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip color="orange lighten-4">
+                      {{ employeesWithoutAnyDevice.length }} คน
+                    </v-chip>
+                  </v-list-item-action>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      ในกลุ่มข้างต้น: มีคอมเก่าอย่างน้อย 1 เครื่อง
+                    </v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip color="blue lighten-4">
+                      {{ employeesWithoutAnyDevice_OwnOldDevice.length }} คน
+                    </v-chip>
+                  </v-list-item-action>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      ในกลุ่มข้างต้น: ไม่มีคอมพิวเตอร์เลย (ทั้งใหม่และเก่า)
+                    </v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-chip color="red lighten-4">
+                      {{ employeesWithoutAnyDevice_NoDeviceAtAll.length }} คน
+                    </v-chip>
+                  </v-list-item-action>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <v-row>
+        <v-card
+          outlined
+          class="mt-4"
+          v-if="deptNewDeviceStats.length"
+          ref="surplusSection"
+        >
+          <v-card-title class="subtitle-1 font-weight-bold">
+            <v-icon left color="teal">mdi-view-list</v-icon>
+            {{ deptViewLabel }}
+          </v-card-title>
+
+          <v-card-text>
+            <!-- 🔍 Search bar -->
+            <v-text-field
+              v-model="surplusSearch"
+              label="ค้นหาแผนก / รหัส / กฟฟ. / ภาค"
+              dense
+              clearable
+              prepend-inner-icon="mdi-magnify"
+              class="mb-2"
+            ></v-text-field>
+            <small class="grey--text">
+              คลิกที่แถวเพื่อเลื่อนไปยังรายละเอียดแผนกด้านล่าง
+            </small>
+
+            <div class="scroll-table-10 mt-2">
+              <v-simple-table dense>
+                <thead>
+                  <tr>
+                    <th>ภาค</th>
+                    <th>กฟฟ.</th>
+                    <th>รหัสแผนก</th>
+                    <th>ชื่อแผนก</th>
+                    <th>พนักงาน</th>
+                    <!-- <th>คอมใหม่</th>
+                    <th>ส่วนเกิน (diff)</th>
+                    <th>พนง.ไม่มีคอมใหม่</th> -->
+                    <th>
+                      {{
+                        deptMetricKey === "all"
+                          ? "คอมทั้งหมด"
+                          : "คอมใหม่ (≥ 2561)"
+                      }}
+                    </th>
+                    <th>
+                      ส่วนต่าง ({{
+                        deptMetricKey === "all"
+                          ? "คอมทั้งหมด - พนักงาน"
+                          : "คอมใหม่ - พนักงาน"
+                      }})
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="d in filteredDeptRows"
+                    :key="d.ccLongCode"
+                    class="clickable-row"
+                    @click="jumpToCc(d.ccLongCode)"
+                  >
+                    <td>{{ d.regionLabel || d.regionKey }}</td>
+                    <td>{{ d.divisionCode }}</td>
+                    <td>{{ d.ccLongCode }}</td>
+                    <td>{{ d.ccShortName }}</td>
+                    <td>{{ d.empCount }}</td>
+                    <!-- <td>{{ d.newItemsCount }}</td>
+                    <td class="green--text">{{ d.diff }}</td>
+                    <td class="red--text">{{ d.employeesWithoutNewCount }}</td> -->
+                    <td>
+                      {{
+                        deptMetricKey === "all"
+                          ? d.allItemsCount
+                          : d.newItemsCount
+                      }}
+                    </td>
+                    <td
+                      :class="{
+                        'green--text':
+                          (deptMetricKey === 'all' ? d.diffAll : d.diffNew) > 0,
+                        'red--text':
+                          (deptMetricKey === 'all' ? d.diffAll : d.diffNew) < 0,
+                      }"
+                    >
+                      {{ deptMetricKey === "all" ? d.diffAll : d.diffNew }}
+                    </td>
+                  </tr>
+                </tbody>
+              </v-simple-table>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-row>
 
       <v-card-text class="px-12 py-0 mx-3 sticky">
         <v-form v-model="valid">
@@ -434,7 +777,9 @@
                       <v-expansion-panel-header
                         :id="`dept-${dept.ccLongCode}`"
                         :class="{
-                          'jump-highlight': highlightedCc === dept.ccLongCode,
+                          // 'jump-highlight': highlightedCc === dept.ccLongCode,
+                          'jump-highlight':
+                            highlightedCc === String(dept.ccLongCode).trim(),
                         }"
                       >
                         <div class="header-grid">
@@ -581,6 +926,21 @@
           </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
+      <v-fab-transition>
+        <v-btn
+          v-if="showBackToTop"
+          fab
+          dark
+          color="primary"
+          fixed
+          bottom
+          right
+          class="ma-4"
+          @click="scrollBackToSuggestions"
+        >
+          <v-icon>mdi-arrow-up</v-icon>
+        </v-btn>
+      </v-fab-transition>
     </v-row>
   </div>
 </template>
