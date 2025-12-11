@@ -224,7 +224,6 @@
         <!-- Section 1: Departments -->
         <v-col cols="12" md="4">
           <v-card outlined>
-            <!-- <v-card-title class="subtitle-1 font-weight-bold"> -->
             <v-card-title
               class="subtitle-1 font-weight-bold d-flex align-center justify-space-between"
             >
@@ -234,19 +233,6 @@
                 <v-icon left color="indigo">mdi-office-building</v-icon>
                 สถานะจำนวนคอมพิวเตอร์เทียบกับพนักงาน (ระดับแผนก)
               </div>
-
-              <!-- Inline clickable selector -->
-              <!-- <v-list dense class="d-flex pa-0" style="gap: 8px">
-                <v-list-item
-                  v-for="mode in deptViewModes"
-                  :key="mode.value"
-                  @click="setDeptViewMode(mode.value)"
-                  class="px-2 py-1 selectable-item"
-                  :class="{ active: deptViewMode === mode.value }"
-                >
-                  <v-list-item-title>{{ mode.label }}</v-list-item-title>
-                </v-list-item>
-              </v-list> -->
             </v-card-title>
             <v-card-text>
               <v-list dense>
@@ -326,7 +312,6 @@
                     </v-chip>
                   </v-list-item-action>
                 </v-list-item>
-
               </v-list>
             </v-card-text>
           </v-card>
@@ -430,7 +415,14 @@
 
                 <v-divider class="my-2"></v-divider>
 
-                <v-list-item>
+                <!-- clickable 1: emp-no-new -->
+                <v-list-item
+                  class="summary-clickable"
+                  :class="{
+                    'summary-active': employeeViewMode === 'emp-no-new',
+                  }"
+                  @click="setEmployeeViewModeAndScroll('emp-no-new')"
+                >
                   <v-list-item-content>
                     <v-list-item-title>
                       พนักงานที่ยังไม่มีคอมพิวเตอร์ใหม่ (≥ 2561)
@@ -443,7 +435,14 @@
                   </v-list-item-action>
                 </v-list-item>
 
-                <v-list-item>
+                <!-- clickable 2: emp-no-new-own-old -->
+                <v-list-item
+                  class="summary-clickable"
+                  :class="{
+                    'summary-active': employeeViewMode === 'emp-no-new-own-old',
+                  }"
+                  @click="setEmployeeViewModeAndScroll('emp-no-new-own-old')"
+                >
                   <v-list-item-content>
                     <v-list-item-title>
                       ในกลุ่มข้างต้น: มีคอมเก่าอย่างน้อย 1 เครื่อง
@@ -456,7 +455,14 @@
                   </v-list-item-action>
                 </v-list-item>
 
-                <v-list-item>
+                <!-- clickable 3: emp-no-any -->
+                <v-list-item
+                  class="summary-clickable"
+                  :class="{
+                    'summary-active': employeeViewMode === 'emp-no-any',
+                  }"
+                  @click="setEmployeeViewModeAndScroll('emp-no-any')"
+                >
                   <v-list-item-content>
                     <v-list-item-title>
                       ในกลุ่มข้างต้น: ไม่มีคอมพิวเตอร์เลย (ทั้งใหม่และเก่า)
@@ -478,7 +484,7 @@
         <v-card
           outlined
           class="mt-4"
-          v-if="deptNewDeviceStats.length"
+          v-if="detailMode === 'dept'"
           ref="surplusSection"
         >
           <v-card-title class="subtitle-1 font-weight-bold">
@@ -509,9 +515,6 @@
                     <th>รหัสแผนก</th>
                     <th>ชื่อแผนก</th>
                     <th>พนักงาน</th>
-                    <!-- <th>คอมใหม่</th>
-                    <th>ส่วนเกิน (diff)</th>
-                    <th>พนง.ไม่มีคอมใหม่</th> -->
                     <th>
                       {{
                         deptMetricKey === "all"
@@ -540,9 +543,6 @@
                     <td>{{ d.ccLongCode }}</td>
                     <td>{{ d.ccShortName }}</td>
                     <td>{{ d.empCount }}</td>
-                    <!-- <td>{{ d.newItemsCount }}</td>
-                    <td class="green--text">{{ d.diff }}</td>
-                    <td class="red--text">{{ d.employeesWithoutNewCount }}</td> -->
                     <td>
                       {{
                         deptMetricKey === "all"
@@ -560,6 +560,51 @@
                     >
                       {{ deptMetricKey === "all" ? d.diffAll : d.diffNew }}
                     </td>
+                  </tr>
+                </tbody>
+              </v-simple-table>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <v-card outlined class="mt-4" v-else ref="employeeSection">
+          <v-card-title class="subtitle-1 font-weight-bold">
+            <v-icon left color="deep-orange">mdi-account-search</v-icon>
+            {{ employeeViewLabel }}
+          </v-card-title>
+
+          <v-card-text>
+            <v-text-field
+              v-model="employeeSearch"
+              label="ค้นหาด้วยรหัสพนักงาน / ชื่อ / แผนก"
+              dense
+              clearable
+              prepend-inner-icon="mdi-magnify"
+              class="mb-2"
+            ></v-text-field>
+
+            <div class="scroll-table-10 mt-2">
+              <v-simple-table dense>
+                <thead>
+                  <tr>
+                    <th>รหัสพนักงาน</th>
+                    <th>ชื่อพนักงาน</th>
+                    <th>แผนก</th>
+                    <th>รหัสแผนก</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- <tr v-for="e in employeeSearchFilteredRows" :key="e.empId"> -->
+                  <tr
+                    v-for="e in employeeSearchFilteredRows"
+                    :key="e.empId"
+                    class="clickable-row"
+                    @click="jumpToCc(e.ccLongCode)"
+                  >
+                    <td>{{ e.empId }}</td>
+                    <td>{{ e.empName }}</td>
+                    <td>{{ e.empDep_full || "-" }}</td>
+                    <td>{{ e.ccLongCode || "-" }}</td>
                   </tr>
                 </tbody>
               </v-simple-table>
