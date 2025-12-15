@@ -276,7 +276,7 @@
                 </v-list-item>
 
                 <v-divider class="my-2"></v-divider>
-
+                
                 <!-- clickable item3: new-ge -->
                 <v-list-item
                   class="summary-clickable"

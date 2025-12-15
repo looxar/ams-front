@@ -61,7 +61,6 @@ export default {
 
   methods: {
     triggerFileSelect() {
-      console.log("triggerFileSelect called");
       this.$refs.fileInput.click();
     },
 
@@ -89,7 +88,6 @@ export default {
         this.selectedFile = file;
         this.fileName = file.name;
         this.alert = false;
-        console.log("✅ Valid Excel file selected:", this.fileName);
         // Optional: auto upload or validate here
       }
     },
@@ -98,16 +96,6 @@ export default {
       this.readLoading = true;
       this.uploadFinish = false;
 
-      console.log("XLSX", XLSX);
-      if (!this.selectedFile) {
-        this.alert = true;
-        setTimeout(() => {
-          this.alert = false;
-        }, 3000);
-        this.readLoading = false;
-        return;
-      }
-
       this.alert = false;
 
       const reader = new FileReader();
@@ -115,21 +103,21 @@ export default {
       reader.onload = (e) => {
         const data = new Uint8Array(e.target.result);
         try {
-          console.log("check5", XLSX.utils);
+          // console.log("check5", XLSX.utils);
           const workbook = XLSX.read(data, { type: "array" });
-          console.log("check3", workbook);
+          // console.log("check3", workbook);
 
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
 
-          console.log("check4", worksheet);
+          // console.log("check4", worksheet);
 
           // 🧾 Read as 2D array (no header row)
           const rows = XLSX.utils.sheet_to_json(worksheet, {
             header: 1, // => [ [row1], [row2], ... ]
             defval: "", // default value for empty cells
           });
-          console.log("✅ rows", rows);
+          // console.log("✅ rows", rows);
 
           // === CONFIG: mapping column index (0-based) ===
           const START_DATA_ROW = 0; // change if you need to skip some top rows
@@ -146,8 +134,6 @@ export default {
             const hasNonEmpty = row.some((cell) => String(cell).trim() !== "");
             return hasNonEmpty;
           });
-
-          console.log("✅ dataRows", dataRows);
 
           // 2) map เป็น object ตาม key ที่ใช้ใน tableHeadersCC
           const allRecords = dataRows.map((row) => {
@@ -221,7 +207,6 @@ export default {
       this.processLoading = true;
       this.uploadFinish = false;
 
-      console.log("📄 Previewing 5 rows from Excel...");
       const preview = await this.previewExcelRows(this.selectedFile);
       console.table(preview);
       try {
@@ -237,9 +222,6 @@ export default {
             headers: { "Content-Type": "multipart/form-data" },
           }
         );
-
-        console.log("📦 Response:", resp.data);
-
         const { inserted, updated } = resp.data;
 
         this.inserted = inserted ?? 0;
@@ -273,8 +255,6 @@ export default {
       this.readLoading = true;
       try {
         const resp = await axios.get(`${process.env.VUE_APP_BASE_URL}/cc/all`);
-
-        console.log("📦 Fetch CC DB Response:", resp.data);
 
         this.tableItemsEmp = resp.data.map((item) => ({
           cc_long_code: item.cc_long_code,

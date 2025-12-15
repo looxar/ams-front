@@ -126,7 +126,6 @@ export default {
     dialog: function (val) {
       if (val) {
         this.passwordField = "";
-        console.log("clear password");
       }
     },
     // loadingEmp: 'updateOverallLoading',
@@ -168,7 +167,6 @@ export default {
       } finally {
         this.loadingEmp = false;
       }
-      // console.log("itemsEmp ", this.itemsEmp);
     },
     async loadCCData() {
       this.loadingCC = true;
@@ -178,7 +176,6 @@ export default {
           `${process.env.VUE_APP_BASE_URL}/cc/getAllCCOnlyUse`
         );
         // this.itemsCC = response.data.costCenter;
-        console.log("itemsCC ", this.itemsCC);
         this.itemsCC = response.data.costCenter.map((item) => ({
           ccLongCode: item[0],
           ccShortName: item[1],
@@ -206,23 +203,15 @@ export default {
     },
 
     updateCC(modelCC) {
-      console.log("modelCC update " + modelCC.ccLongCode);
-
       this.modelCC = modelCC;
-
       this.modelEmp = null;
     },
 
     updateCCFromEmp(modelEmp) {
-      // console.log("modelCC update " + modelEmp.ccLongCode);
-
       var result = this.itemsCC.find(
         (item) => item.ccLongCode === modelEmp.ccLongCode
       );
-      // console.log("result " + result.ccLongCode);
       this.modelCC = result;
-      // how can I have here the index value?
-      console.log("modelCC update " + JSON.stringify(this.modelCC));
     },
 
     async loadAllData() {
@@ -237,22 +226,15 @@ export default {
         this.alert = true;
         window.setInterval(() => {
           this.alert = false;
-          // console.log("hide alert after 3 seconds");
         }, 3000);
       } else {
-        // console.log("param device_type_id - ", this.setAssetComType);
         let params = [];
 
         params = {
           region: this.modelCC["ccLongCode"],
           device_type_id: this.setAssetComType,
         };
-        console.log(
-          "param device_type_id - ",
-          params.device_type_id,
-          " region ",
-          params.region
-        );
+
         if (this.checked7 == false) {
           await axios
             // .get("http://localhost:8080/api/dev/getDevice53unpageByccId", {
@@ -263,17 +245,12 @@ export default {
               }
             )
             .then((resp2) => {
-              // this.getDeviceResult = resp2.data.dataDevice;
-              
               this.getDeviceResult = resp2.data.dataDevice.map((item) => ({
                 devPeaNo: item[0],
                 devDescription: item[1],
                 empName: item[2],
                 devReceivedDate: item[3],
               }));
-
-              console.log("getDeviceResult ", this.getDeviceResult);
-
               this.totalDeviceResult = resp2.data.totalItems;
             })
             .catch((error) => {
@@ -289,12 +266,6 @@ export default {
               }
             )
             .then((resp2) => {
-              // this.getAllResult = resp.data;
-              // console.log(
-              //   "getAllByPattern2unpage",
-              //   JSON.stringify(this.getAllResult)
-              // );
-
               this.getDeviceResult = resp2.data.dataDevice;
               this.totalDeviceResult = resp2.data.totalItems;
             })
@@ -307,7 +278,6 @@ export default {
         //let ccFullName = this.modelCC["ccFullName"];
         this.ccShortName = this.modelCC["ccShortName"];
         this.ccShortCode = this.modelCC["ccLongCode"].slice(0,7);
-        console.log("ccShortCode- " + this.ccShortCode);
         params = {
           region: this.ccLong,
         };
@@ -317,8 +287,6 @@ export default {
             params,
           })
           .then((resp3) => {
-            // console.log("getEmployeeResult ", resp3.data.dataEmployee);
-
             this.getEmployeeResult = resp3.data.dataEmployee.map((item) => ({
               empId: item[0],
               empName: item[1],
@@ -326,9 +294,6 @@ export default {
               empRank: item[3],
               ccLongCode: item[4],
             }));
-
-            console.log("getEmployeeResult ", this.getEmployeeResult);
-
             this.totalEmployeeResult = resp3.data.totalItems;
             return;
           })
@@ -344,23 +309,12 @@ export default {
             this.ccShortName?.includes("ผกป") ||
             !this.ccShortCode?.slice(-1) == "1")
         ) {
-          console.log(
-            "Check พชง. 3:2 " +
-              this.ccShortName?.includes('ผปบ') +
-              " " +
-              this.ccShortName?.includes('ผกส') +
-              " " +
-              this.ccShortName?.includes('ผกป') +
-              " " +
-              this.ccShortCode +
-              !this.ccShortCode?.endsWith('1')
-          );
           this.countElectrician = 0;
           let electrician = "";
           this.countAssistElectrician = 0;
           // let assistElectrician = '';
           this.quotaCom = 0;
-          // console.log("totalEmployeeResult " + JSON.stringify(this.getEmployeeResult[0].empRole));
+
           for (let i = 0; i < this.totalEmployeeResult; i++) {
             electrician = JSON.stringify(this.getEmployeeResult[i].empRole);
             if (
@@ -368,25 +322,20 @@ export default {
               // || electrician.includes("ชชง")
             ) {
               this.countElectrician++;
-              // this.quotaCom++;
-              // if(this.countElectrician % 3 == 0){
-              //   this.quotaCom--;
-              // }
+
             } else if (electrician?.includes("ชชง")) {
               this.countAssistElectrician++;
             }
           }
-          console.log("countElectrician " + this.countElectrician);
+
           let a = this.countElectrician;
           for (let i = 1; i <= this.countElectrician; i++) {
-            console.log("Compare: " + i / a);
+
             if (i / a < 0.67) {
               this.quotaCom++;
             }
-            console.log("Com พชง:" + this.quotaCom);
-            // if(this.countElectrician % 3 == 0){
-            //   this.quotaCom--;
-            // }
+
+
           }
           //นับ ชชง.
 
@@ -394,7 +343,6 @@ export default {
             this.totalEmployeeResult -
             this.countElectrician -
             this.countAssistElectrician;
-          console.log("quotaCom final " + this.quotaCom);
 
           //แผนก quota 2:3
           // if (this.totalEmployeeResult > this.totalDeviceResult) {
@@ -441,7 +389,7 @@ export default {
       }
     },
 
-    checked7year(newValue) {
+    checked7year() {
       if (this.passwordField == "itsco") {
         if (this.checked7) {
           this.checked7 = false;
@@ -453,13 +401,11 @@ export default {
         this.wrongPassword = true;
       }
 
-      console.log(newValue);
     },
 
     openDialog() {
       this.dialog = true;
       this.wrongPassword = false;
-      console.log("openDialog");
     },
 
     genQuotaReport() {
@@ -467,12 +413,10 @@ export default {
         this.alert = true;
         window.setInterval(() => {
           this.alert = false;
-          // console.log("hide alert after 3 seconds");
         }, 3000);
       } else {
         this.itemName = this.modelCC["ccFullName"];
         this.$refs.html2Pdf.generatePdf();
-        // console.log("hide alert after 4 seconds");
       }
     },
 
@@ -481,18 +425,11 @@ export default {
       this.jsonObj["assetComType"] = [];
       this.jsonObj["assetComType"] = assetComType;
       this.setAssetComType = assetComType;
-      console.log("assetComType-" + this.setAssetComType);
     },
 
-    // itemRowBackground: function (item) {
-    //   return item.includes("พชง") || item.includes("ชชง")  ? 'style-1' : 'style-2'
-    //   //return 'style-1';
-    // },
   },
 
   computed: {
-    // loading() {
-    //   return this.loadingEmp || this.loadingCC;
-    // },
+
   },
 };

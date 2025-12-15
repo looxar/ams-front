@@ -116,7 +116,6 @@ export default {
 
   methods: {
     triggerFileSelect() {
-      console.log("triggerFileSelect called");
       this.$refs.fileInput.click();
     },
     onFileSelected(event) {
@@ -143,23 +142,12 @@ export default {
         this.selectedFile = file;
         this.fileName = file.name;
         this.alert = false;
-        console.log("✅ Valid Excel file selected:", this.fileName);
         // Optional: auto upload or validate here
       }
     },
     processReadFile() {
       this.readLoading = true;
       this.uploadFinish = false;
-
-      console.log("XLSX", XLSX);
-      if (!this.selectedFile) {
-        this.alert = true;
-        setTimeout(() => {
-          this.alert = false;
-        }, 3000);
-        this.readLoading = false;
-        return;
-      }
 
       this.alert = false;
 
@@ -168,20 +156,20 @@ export default {
       reader.onload = (e) => {
         const data = new Uint8Array(e.target.result);
         try {
-          console.log("check5", XLSX.utils);
+          // console.log("check5", XLSX.utils);
           const workbook = XLSX.read(data, { type: "array" });
-          console.log("check3", workbook);
+          // console.log("check3", workbook);
 
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
 
-          console.log("check4", worksheet);
+          // console.log("check4", worksheet);
 
           const rows = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
             defval: "",
           });
-          console.log("✅ rows", rows);
+          // console.log("✅ rows", rows);
 
           const headerRowIndex = rows.findIndex((row) => {
             if (!Array.isArray(row)) return false;
@@ -345,7 +333,7 @@ export default {
       this.uploadAbortController = new AbortController();
       this.processLoading = true;
       this.uploadFinish = false;
-      console.log("uploadItems[0]", this.uploadItems[0]);
+
       try {
         const resp = await axios.post(
           `${process.env.VUE_APP_BASE_URL}/api/dev/temp_upload`,
@@ -356,8 +344,6 @@ export default {
             signal: this.uploadAbortController.signal,
           }
         );
-
-        console.log("📦 Response:", resp.data);
         const { success, message } = resp.data;
 
         this.uploadFinish = true;
@@ -404,17 +390,11 @@ export default {
 
         // Step 3
         const result3 = await this.queryStep3();
-        // console.log("Step 3 done:", result3);
         this.noMatchTableItems = result3.data.items;
         console.log("Step 3 done:", this.noMatchTableItems);
 
         // Step 4
         const result4 = await this.queryStep4();
-        // this.noMatchTableItems = result3.data.items;
-        // console.log("Step 4 done:", result4);
-        // this.insertedCount = result4.data.insertedCount;
-        // this.insertedCount2 = result4.data.insertedCount2;
-        // this.softDeletedCount = result4.data.softDeletedCount;
         this.insertedCount = result4.data.inserted_count;
         this.insertedCount2 = result4.data.inserted_count2;
         this.softDeletedCount = result4.data.soft_deleted_count;
@@ -438,14 +418,13 @@ export default {
           `${process.env.VUE_APP_BASE_URL}/api/dev/temp_concat`
         );
 
-        const { success, message } = resp.data;
+        // const { success, message } = resp.data;
+        const { success } = resp.data;
 
         if (success) {
           this.uploadSuccess = true;
-          console.log("📦 success queryStep1:", success);
         } else {
           this.uploadSuccess = false;
-          console.log("📦 failed queryStep1:", message);
         }
 
         return resp.data; // ✅ this ensures result1 gets a value
@@ -469,14 +448,13 @@ export default {
           `${process.env.VUE_APP_BASE_URL}/api/dev/update_temp_device_type`
         );
 
-        const { success, message } = resp.data;
+        // const { success, message } = resp.data;
+        const { success } = resp.data;
 
         if (success) {
           this.uploadSuccess = true;
-          console.log("📦 success queryStep2:", success);
         } else {
           this.uploadSuccess = false;
-          console.log("📦 failed queryStep2:", message);
         }
 
         return resp.data; // ✅ this ensures result1 gets a value
@@ -499,14 +477,13 @@ export default {
           `${process.env.VUE_APP_BASE_URL}/api/dev/check_no_match`
         );
 
-        const { success, message } = resp.data;
+        // const { success, message } = resp.data;
+        const { success } = resp.data;
 
         if (success) {
           this.uploadSuccess = true;
-          console.log("📦 success queryStep3:", success);
         } else {
           this.uploadSuccess = false;
-          console.log("📦 failed queryStep3:", message);
         }
 
         return resp.data; // ✅ this ensures result1 gets a value
@@ -524,20 +501,18 @@ export default {
     },
 
     async queryStep4() {
-      console.log("inprogress queryStep4");
       try {
         const resp = await axios.post(
           `${process.env.VUE_APP_BASE_URL}/api/dev/insert_update_master`
         );
 
-        const { success, message } = resp.data;
+        // const { success, message } = resp.data;
+        const { success } = resp.data;
 
         if (success) {
           this.uploadSuccess = true;
-          console.log("📦 success queryStep4:", success);
         } else {
           this.uploadSuccess = false;
-          console.log("📦 failed queryStep4:", message);
         }
 
         return resp.data; // ✅ this ensures result1 gets a value

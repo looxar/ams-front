@@ -157,7 +157,6 @@ export default {
         //   valuePerMonth: item[1],
         //   yearMonth: item[2],
         // }));
-        console.log(this.records60ByMonth);
         this.barDataByMonth = {
           labels: this.records60ByMonth.map((i) =>
             this.formatMonth(i.yearMonth)
@@ -193,8 +192,7 @@ export default {
         //   valuePerMonth: item[1],
         //   yearMonth: item[2],
         // }));
-        this.records60ByUser.sort((a, b) => b.valuePerUser - a.valuePerUser)
-        console.log("ByUser ", this.records60ByUser);
+        this.records60ByUser.sort((a, b) => b.valuePerUser - a.valuePerUser);
 
         this.barDataByUser = {
           labels: this.records60ByUser.map((i) => i.username),

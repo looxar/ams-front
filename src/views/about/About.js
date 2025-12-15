@@ -839,8 +839,6 @@ export default {
   mounted() {
     this.myloadingvariable = true;
 
-    console.log("initMountedBranch " + this.initMountedBranch);
-
     let params = {
       // region: "E3010",
       region: this.initMountedBranch,
@@ -854,7 +852,6 @@ export default {
       })
       .then((resp) => {
         this.getAllResult = resp;
-        console.log("data mounted ", this.getAllResult);
         // this.data1 = resp.data.dataExcel;
         this.data1 = Array.isArray(resp.data.dataExcel)
           ? resp.data.dataExcel
@@ -876,8 +873,6 @@ export default {
         }));
         // this.itemsPerPage = resp.data.itemsPerPage;
         this.totalItems = resp.data.totalItems;
-        console.log("at mounted ", this.getAllResult.data.totalItems);
-        console.log("at mounted data ", this.data1);
         this.myloadingvariable = false;
       })
 
@@ -894,22 +889,18 @@ export default {
   methods: {
     getItemPerPage(val) {
       this.itemsPerPage = val;
-      console.log("setItemPerPage ", this.itemsPerPage);
       this.searchFunction();
     },
 
     treeselectChange: function (node) {
       // alert("changed ", value);
-      console.log(node.value);
       this.jsonObj = JSON.parse(this.jsonStrBranch);
       this.jsonObj["branch"] = [];
       this.jsonObj["branch"] = node.value;
       this.appendBranch = JSON.stringify(this.jsonObj);
-      console.log("b-" + this.appendBranch);
     },
 
     handleInspectorSelect(node) {
-      console.log(node);
       this.formData.inspector_name = node.label;
       this.formData.inspector_role = node.role || "-";
       this.formData.inspect_dep_name = node.depName;
@@ -917,16 +908,12 @@ export default {
     },
 
     handleDepHeadSelect(selectedNode) {
-      // console.log(selectedNode);
-
       this.depHeadItem = this.depHeadList.find(
         (item) => item.depId === selectedNode.depId
       );
-      console.log("depHeadItem ", this.depHeadItem);
 
       if (this.depHeadItem) {
         this.selectedDepHead = this.depHeadItem;
-        console.log("selectedDepHead ", this.selectedDepHead);
         const role_full = this.depHeadItem.role + " " + this.depHeadItem.depName; 
 
         this.formData.dep_head_name = this.depHeadItem.label;
@@ -940,7 +927,6 @@ export default {
 
     autoSetDepHeadSelect(depId) {
       this.depHead = this.depHeadList.find((item) => item.depId === depId);
-      console.log("depHead-auto ", this.depHead);
       if (this.depHead) {
         this.selectedDepHead = this.depHead; // ✅ match by object reference
         // this.formData.dep_head_name = this.selectedDepHead.label;
@@ -958,7 +944,6 @@ export default {
       this.jsonObj["assetType"] = [];
       this.jsonObj["assetType"] = assetType;
       this.setAssetType = JSON.stringify(this.jsonObj);
-      console.log("assetType-" + JSON.stringify(this.jsonObj));
     },
 
     searchFunction() {
@@ -970,7 +955,6 @@ export default {
         this.alert = true;
         window.setInterval(() => {
           this.alert = false;
-          // console.log("hide alert after 3 seconds");
         }, 3000);
       } else {
         if (this.setAssetType.length == 0) {
@@ -981,9 +965,8 @@ export default {
         let selectedBranch = JSON.parse(this.appendBranch);
 
         let setAssetType2 = JSON.parse(this.setAssetType);
-        // console.log("setAssetType ",this.setAssetType);
         let params = [];
-        console.log("itemsPerPage", this.itemsPerPage);
+
         
         //ถ้าไม่ใส่คำค้นA1
         if (this.textSearch.length == 0) {
@@ -991,7 +974,6 @@ export default {
             region: selectedBranch.branch,
             setAssetType: setAssetType2.assetType,
           };
-          console.log("searchNoWordUnpage-", params);
           axios
             // .get("http://localhost:8080/api/dev/searchNoWordUnpage", {
             .get(`${process.env.VUE_APP_BASE_URL}/api/dev/searchNoWordUnpage`, {
@@ -999,11 +981,6 @@ export default {
             })
             .then((resp) => {
               this.getAllResult = resp.data;
-              console.log(
-                "searchNoWordUnpage-" + params["region"],
-                // JSON.stringify(this.getAllResult)
-                this.getAllResult
-              );
 
               // this.data1 = resp.data.dataExcel;
               this.data1 = Array.isArray(resp.data.dataExcel)
@@ -1043,8 +1020,6 @@ export default {
             textSearch: this.textSearch,
             setAssetType: setAssetType2.assetType,
           };
-          console.log("searchFunction ", params);
-
           axios
             // .get("http://localhost:8080/api/dev/searchWithWord", { params })
             .get(`${process.env.VUE_APP_BASE_URL}/api/dev/searchWithWord`, {
@@ -1052,12 +1027,6 @@ export default {
             })
             .then((resp) => {
               this.getAllResult = resp.data;
-              console.log(
-                "searchWithWord-AllResult ",
-                // JSON.stringify(this.getAllResult)
-                this.getAllResult
-              );
-
               // this.data1 = resp.data.data1;
               this.data1 = Array.isArray(resp.data.data1)
                 ? resp.data.data1
@@ -1077,7 +1046,6 @@ export default {
                 empName: item[11],
                 empRank: item[12],
               }));
-              // console.log("searchWithWord-AllResult ", this.data1);
               // this.itemsPerPage = resp.data.itemsPerPage;
               this.totalItems = resp.data.totalItems;
               this.myloadingvariable = false;
@@ -1094,12 +1062,10 @@ export default {
         this.alert = true;
         window.setInterval(() => {
           this.alert = false;
-          // console.log("hide alert after 3 seconds");
         }, 3000);
       } else {
         this.dataExcel = this.data1;
         this.myloadingvariable = false;
-        console.log("dataExcel : ", this.dataExcel);
         return this.dataExcel;
       }
     },
@@ -1114,7 +1080,7 @@ export default {
     editItem(item) {
       this.editedIndex = this.data1.indexOf(item);
       this.editedItem = Object.assign({}, item);
-      console.log("editedItem-qr ", this.editedItem);
+
       (this.qrcode_value =
         // JSON.parse([
         JSON.stringify({
@@ -1139,12 +1105,10 @@ export default {
         .get(`${process.env.VUE_APP_BASE_URL}/emp/getInspectorList`)
         .then((resp) => {
           this.getAllResult = resp.data;
-          console.log("inspectorList ", this.getAllResult);
 
           this.inspectorList = Array.isArray(resp.data.data)
             ? resp.data.data
             : [];
-          console.log("inspectorList ", this.inspectorList);
 
           this.inspectorList = this.inspectorList
             .filter((item) => item[2] !== "หผ.")
@@ -1160,7 +1124,6 @@ export default {
           this.depHeadList = Array.isArray(resp.data.data)
             ? resp.data.data
             : [];
-          console.log("depHeadList ", this.depHeadList);
 
           this.depHeadList = this.depHeadList
             .filter((item) => item[2] == "หผ.")
@@ -1184,7 +1147,6 @@ export default {
     showFixForm(item) {
       this.editedIndex = this.data1.indexOf(item);
       this.editedItem = Object.assign({}, item);
-      // console.log("editedItem in dialogFixForm ", this.editedItem);
       this.editedItem.date = dateService.formatDateToThai(new Date())
       this.editedItem.type_other = "-";
       this.editedItem.brand = "-";
@@ -1214,7 +1176,6 @@ export default {
         inspect_dep_name:"",
       };
 
-      console.log("formData dialogFixForm ", this.formData);
       this.dialogFixForm = true;
     },
 
@@ -1299,18 +1260,14 @@ export default {
     },
     enterSelect() {
       let e = this.selected.map((e) => e);
-      // console.log(e.length); // logs all the selected items.
       this.qrcode_value2 = [];
       this.detail_value = [];
       this.groupSelected = e;
-      console.log(this.groupSelected.length);
 
       let i = 0;
       this.result = this.groupSelected.map(({ devPeaNo }) => ({ devPeaNo }));
       this.result2 = this.groupSelected.map(({ devPeaNo }) => ({ devPeaNo }));
-      // result.forEach((element) => {
-      //   element.empId = this.groupSelected.tbEmployee.empId;
-      // });
+
       for (i = 0; i < this.groupSelected.length; i++) {
         if (this.groupSelected[i].tbEmployee !== null) {
           this.result[i].empId = this.groupSelected[i].tbEmployee.empId;
@@ -1319,11 +1276,8 @@ export default {
           this.result[i].empId = "ไม่ระบุ";
           this.result[i].empName = "ไม่ระบุ";
         }
-        // result[i].empId = this.groupSelected[i].tbEmployee.empId;
-        // result[i].empId = this.groupSelected[i].tbEmployee.empId;
+
         this.result[i].devSerialNo = this.groupSelected[i].devSerialNo;
-        // this.result2[i].devSerialNo =
-        // this.groupSelected[i].devSerialNo;
 
         this.result[i].devReceivedDate = this.groupSelected[i].devReceivedDate;
 
@@ -1344,13 +1298,9 @@ export default {
       }
 
       for (i = 0; i < this.result.length; i++) {
-        console.log(JSON.stringify(this.result[i]));
-        // this.qrcode_value2[i].push(JSON.stringify(this.groupSelected[i].devPeaNo)); ?region=ZC05020000
         this.detail_value.push(JSON.stringify(this.result[i]));
       }
       for (i = 0; i < this.result.length; i++) {
-        console.log(JSON.stringify(this.result2[i]));
-        // this.qrcode_value2[i].push(JSON.stringify(this.groupSelected[i].devPeaNo)); ?region=ZC05020000
         this.qrcode_value2.push(JSON.stringify(this.result2[i].devPeaNo));
       }
       if (this.selected.length == this.itemsPerPage) {
@@ -1363,7 +1313,6 @@ export default {
         this.alert2 = true;
         window.setInterval(() => {
           this.alert2 = false;
-          // console.log("hide alert after 3 seconds");
         }, 3000);
       } else {
         this.$refs.html2Pdf.generatePdf();

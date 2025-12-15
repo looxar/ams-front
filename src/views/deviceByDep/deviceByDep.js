@@ -67,6 +67,11 @@ export default {
       employeeSearch: "",
 
       detailMode: "dept",
+
+      // totalDeptCounts: {
+      //   ge: 0,
+      //   lt: 0,
+      // },
     };
   },
 
@@ -102,7 +107,6 @@ export default {
     },
 
     regions() {
-      // console.log("rows sample:", this.rows.slice(0, 1)); // 👈 check raw data
       const regionMap = new Map();
 
       // ---- Phase 1: build base tree from itemsCC (all cost centers) ----
@@ -118,13 +122,6 @@ export default {
         const regionKey = this.getRegionKeyFromRow({
           ccLongCode: ccLongCodeRaw,
         });
-
-        // // 🔹 Division code from CC
-        // // If you already have a helper, use it.
-        // // Otherwise, adjust this slice to your pattern.
-        // const divisionCode = this.getDivisionCodeFromCc
-        //   ? this.getDivisionCodeFromCc(ccLongCodeRaw)
-        //   : ccLongCodeRaw.slice(0, 7); // <-- example only, adjust!
 
         const divisionCode = this.getDivisionCodeFromCc(ccLongCodeRaw);
 
@@ -177,132 +174,6 @@ export default {
         }
       }
 
-      // Phase1: old code
-      // for (const r of this.rows) {
-      //   const ccLongCodeRaw = r.ccLongCode || r.cc_long_code;
-      //   const ccShortName = r.ccShortName || r.cc_short_name || null;
-      //   const divisionCode = r.divisionCode || r.division_code || "UNKNOWN_DIV";
-      //   // const empId = r.empId ?? r.emp_id ?? null;
-      //   const devReceivedDate =
-      //     r.devReceivedDate || r.dev_received_date || null;
-
-      //   // tag rows by year (use normalized date)
-      //   r._tag = this.tagRowByYear({
-      //     ...r,
-      //     devReceivedDate, // pass normalized field if needed
-      //   });
-
-      //   // region
-      //   // region key (make sure getRegionKeyFromRow can handle this)
-      //   const regionKey = this.getRegionKeyFromRow({
-      //     ...r,
-      //     ccLongCode: ccLongCodeRaw,
-      //   });
-
-      //   if (!regionMap.has(regionKey)) {
-      //     regionMap.set(regionKey, {
-      //       regionKey,
-      //       regionLabel: null,
-      //       divisions: new Map(),
-      //       totalRecords: 0,
-      //       newCount: 0,
-      //       oldCount: 0,
-      //       unknownCount: 0,
-      //       firstDept: null,
-      //     });
-      //   }
-      //   const reg = regionMap.get(regionKey);
-
-      //   reg.totalRecords++;
-      //   if (r._tag === "new") reg.newCount++;
-      //   else if (r._tag === "old") reg.oldCount++;
-      //   else reg.unknownCount++;
-
-      //   // 🔹 division
-      //   const divKey = divisionCode;
-      //   if (!reg.divisions.has(divKey)) {
-      //     reg.divisions.set(divKey, {
-      //       divisionCode: divKey,
-      //       divisionCount: r.divisionCount ?? 0,
-      //       departmentCount: r.departmentCount ?? 0,
-      //       departments: new Map(),
-      //       totalRecords: 0,
-      //       newCount: 0,
-      //       oldCount: 0,
-      //       unknownCount: 0,
-      //       firstDept: null,
-      //     });
-      //   }
-      //   const div = reg.divisions.get(divKey);
-
-      //   div.totalRecords++;
-      //   if (r._tag === "new") div.newCount++;
-      //   else if (r._tag === "old") div.oldCount++;
-      //   else div.unknownCount++;
-
-      //   if (typeof r.divisionCount === "number")
-      //     div.divisionCount = Math.max(div.divisionCount, r.divisionCount);
-      //   if (typeof r.departmentCount === "number")
-      //     div.departmentCount = Math.max(
-      //       div.departmentCount,
-      //       r.departmentCount
-      //     );
-
-      //   // 🔹 department key (use normalized ccLongCode)
-      //   const deptKey = ccLongCodeRaw
-      //     ? String(ccLongCodeRaw).toUpperCase().trim()
-      //     : "UNKNOWN";
-
-      //   if (!div.departments.has(deptKey)) {
-      //     div.departments.set(deptKey, {
-      //       ccLongCode: deptKey,
-      //       ccShortName, // use normalized short name
-      //       items: [],
-      //       newCount: 0,
-      //       oldCount: 0,
-      //       unknownCount: 0,
-      //       employees: [],
-      //       empCount: 0,
-      //     });
-      //   }
-
-      //   const dept = div.departments.get(deptKey);
-      //   // if first row didn't have a name but later rows do, fill it in
-      //   if (!dept.ccShortName && ccShortName) {
-      //     dept.ccShortName = ccShortName;
-      //   }
-
-      //   dept.items.push({
-      //     ...r,
-      //     devReceivedDate, // keep normalized field for sorting later
-      //   });
-
-      //   if (r._tag === "new") dept.newCount++;
-      //   else if (r._tag === "old") dept.oldCount++;
-      //   else dept.unknownCount++;
-
-      //   if (dept.employees.length === 0) {
-      //     const emps = this.empByCC.get(deptKey) || [];
-      //     dept.employees = emps;
-      //     dept.empCount = emps.length;
-      //   }
-
-      //   // 🔹 use normalized empId when building ownerIds
-      //   const ownerIds = new Set(
-      //     (dept.items || [])
-      //       .map((row) => row.empId ?? row.emp_id)
-      //       .filter((v) => v !== null && v !== undefined)
-      //       .map((v) => String(v))
-      //   );
-
-      //   const unowned = (dept.employees || []).filter(
-      //     (e) => !ownerIds.has(String(e.empId))
-      //   );
-
-      //   dept.unownedEmployees = unowned;
-      //   dept.unownedCount = unowned.length;
-      // }
-
       // ---- Phase 2: attach device rows to existing departments ----
       const beKey = this.beDateKey;
 
@@ -322,15 +193,6 @@ export default {
           ccLongCode: ccLongCodeRaw,
         });
 
-        // // again, derive division code for device row
-        // const divisionCode =
-        //   r.divisionCode ||
-        //   r.division_code ||
-        //   (this.getDivisionCodeFromCc
-        //     ? this.getDivisionCodeFromCc(ccLongCodeRaw)
-        //     : ccLongCodeRaw
-        //     ? String(ccLongCodeRaw).slice(0, 7)
-        //     : "UNKNOWN_DIV");
         // Phase 2 (device rows)
         const divisionCode = this.getDivisionCodeFromCc(
           ccLongCodeRaw || r.divisionCode || r.division_code
@@ -509,17 +371,17 @@ export default {
             ? regionFirstDept.ccLongCode
             : reg.regionKey;
 
-          console.log("DEBUG region:", {
-            regionKey: reg.regionKey,
-            divisionsCount: divisionsArr.length,
-            firstDept: regionFirstDept,
-            firstDivision: divisionsArr[0],
-            regionFirstDept:
-              reg.firstDept || divisionsArr[0]?.departments?.[0] || null,
+          // console.log("DEBUG region:", {
+          //   regionKey: reg.regionKey,
+          //   divisionsCount: divisionsArr.length,
+          //   firstDept: regionFirstDept,
+          //   firstDivision: divisionsArr[0],
+          //   regionFirstDept:
+          //     reg.firstDept || divisionsArr[0]?.departments?.[0] || null,
 
-            secondDivision: divisionsArr[1],
-            regionSecondDept: divisionsArr[1]?.departments?.[1] || null,
-          });
+          //   secondDivision: divisionsArr[1],
+          //   regionSecondDept: divisionsArr[1]?.departments?.[1] || null,
+          // });
 
           return {
             ...reg,
@@ -533,191 +395,6 @@ export default {
           };
         })
         .sort((a, b) => String(a.regionKey).localeCompare(String(b.regionKey)));
-
-      // return Array.from(regionMap.values())
-      //   .map((reg) => {
-      //     const divisionsArr = Array.from(reg.divisions.values())
-      //       .map((div) => {
-
-      //         const deptsArr = Array.from(div.departments.values())
-      //           .map((d) => {
-      //             const items = d.items.slice().sort((a, b) => {
-      //               const kb = beKey(b.devReceivedDate);
-      //               const ka = beKey(a.devReceivedDate);
-      //               if (kb !== ka) return kb - ka;
-      //               return String(b.deviceId).localeCompare(String(a.deviceId));
-      //             });
-
-      //             const itemsCount = Array.isArray(items) ? items.length : 0;
-      //             const empCount =
-      //               typeof d.empCount === "number"
-      //                 ? d.empCount
-      //                 : Array.isArray(d.employees)
-      //                 ? d.employees.length
-      //                 : 0;
-
-      //             const isItemRich = itemsCount >= empCount; // 🍰 key condition
-
-      //             return {
-      //               ...d,
-      //               items,
-      //               itemsCount,
-      //               empCount,
-      //               isItemRich,
-      //               // department-level counts (0/1)
-      //               deptItemGECount: isItemRich ? 1 : 0,
-      //               deptItemLTCount: isItemRich ? 0 : 1,
-      //             };
-      //           })
-      //           .sort((a, b) =>
-      //             String(a.ccLongCode).localeCompare(String(b.ccLongCode))
-      //           );
-
-      //         // division-level aggregates
-      //         const divDeptItemGECount = deptsArr.reduce(
-      //           (sum, d) => sum + (d.deptItemGECount || 0),
-      //           0
-      //         );
-      //         const divDeptItemLTCount = deptsArr.reduce(
-      //           (sum, d) => sum + (d.deptItemLTCount || 0),
-      //           0
-      //         );
-
-      //         // optional: arrays for this division only
-      //         const itemRichDepts = deptsArr.filter((d) => d.isItemRich);
-      //         const itemPoorDepts = deptsArr.filter((d) => !d.isItemRich);
-
-      //         const seenUnownedDiv = new Set();
-      //         const divUnowned = [];
-      //         for (const d of deptsArr) {
-      //           for (const e of d.unownedEmployees || []) {
-      //             const key = String(e.empId);
-      //             if (!seenUnownedDiv.has(key)) {
-      //               seenUnownedDiv.add(key);
-      //               divUnowned.push(e);
-      //             }
-      //           }
-      //         }
-
-      //         const seenDiv = new Set();
-      //         const divEmployees = [];
-      //         for (const d of deptsArr) {
-      //           for (const e of d.employees || []) {
-      //             const key =
-      //               e.empId != null ? String(e.empId) : `n:${e.empName}`;
-      //             if (!seenDiv.has(key)) {
-      //               seenDiv.add(key);
-      //               divEmployees.push(e);
-      //             }
-      //           }
-      //         }
-
-      //         const firstDeptDiv = div.firstDept || deptsArr[0] || null;
-
-      //         console.log("divUnowned : ", divUnowned);
-      //         return {
-      //           ...div,
-      //           departments: deptsArr,
-      //           firstDept: firstDeptDiv,
-      //           employees: divEmployees,
-      //           empCount: seenDiv.size,
-      //           unownedEmployees: divUnowned,
-      //           unownedCount: seenUnownedDiv.size,
-
-      //           // 👇 NEW: division-level department counts
-      //           deptItemGECount: divDeptItemGECount,
-      //           deptItemLTCount: divDeptItemLTCount,
-      //           itemRichDepts,
-      //           itemPoorDepts,
-      //         };
-      //       })
-      //       .sort((a, b) =>
-      //         String(a.divisionCode).localeCompare(String(b.divisionCode))
-      //       );
-
-      //     const seenReg = new Set();
-      //     const regEmployees = [];
-      //     for (const dv of divisionsArr) {
-      //       for (const e of dv.employees || []) {
-      //         const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
-      //         if (!seenReg.has(key)) {
-      //           seenReg.add(key);
-      //           regEmployees.push(e);
-      //         }
-      //       }
-      //     }
-
-      //     // region-level department arrays
-      //     const regionItemRichDepts = divisionsArr.flatMap(
-      //       (dv) => dv.itemRichDepts || []
-      //     );
-      //     const regionItemPoorDepts = divisionsArr.flatMap(
-      //       (dv) => dv.itemPoorDepts || []
-      //     );
-
-      //     const regionFirstDept =
-      //       reg.firstDept || divisionsArr[0]?.departments?.[0] || null;
-      //     const regionLabel = regionFirstDept
-      //       ? regionFirstDept.ccLongCode
-      //       : reg.regionKey;
-
-      //     const seenUnownedReg = new Set();
-      //     const regUnowned = [];
-      //     for (const dv of divisionsArr) {
-      //       for (const e of dv.unownedEmployees || []) {
-      //         const key = String(e.empId);
-      //         if (!seenUnownedReg.has(key)) {
-      //           seenUnownedReg.add(key);
-      //           regUnowned.push(e);
-      //         }
-      //       }
-      //     }
-
-      //     // 🔹 ADD THIS: sum division counts → region counts
-      //     const regionDeptItemGECount = divisionsArr.reduce(
-      //       (sum, dv) => sum + (dv.deptItemGECount || 0),
-      //       0
-      //     );
-      //     const regionDeptItemLTCount = divisionsArr.reduce(
-      //       (sum, dv) => sum + (dv.deptItemLTCount || 0),
-      //       0
-      //     );
-
-      //     console.log("DEBUG region:", {
-      //       regionKey: reg.regionKey,
-      //       divisionsCount: divisionsArr.length,
-      //       firstDivision: divisionsArr[0],
-      //       regionFirstDept:
-      //         reg.firstDept || divisionsArr[0]?.departments?.[0] || null,
-
-      //       // deptItemGECount: regionItemRichDepts.length,
-      //       // deptItemLTCount: regionItemPoorDepts.length,
-      //       itemRichDepts: regionItemRichDepts,
-      //       itemPoorDepts: regionItemPoorDepts,
-      //       // 👇 NEW: now each region has its own totals
-      //       deptItemGECount: regionDeptItemGECount,
-      //       deptItemLTCount: regionDeptItemLTCount,
-      //     });
-
-      //     return {
-      //       ...reg,
-      //       divisions: divisionsArr,
-      //       firstDept: regionFirstDept,
-      //       regionLabel,
-      //       employees: regEmployees,
-      //       empCount: seenReg.size,
-      //       unownedEmployees: regUnowned,
-      //       unownedCount: seenUnownedReg.size,
-
-      //       itemRichDepts: regionItemRichDepts,
-      //       itemPoorDepts: regionItemPoorDepts,
-
-      //       // 👇 NEW: now each region has its own totals
-      //       deptItemGECount: regionDeptItemGECount,
-      //       deptItemLTCount: regionDeptItemLTCount,
-      //     };
-      //   })
-      //   .sort((a, b) => String(a.regionKey).localeCompare(String(b.regionKey)));
     },
 
     allItemRichDepts() {
@@ -728,20 +405,64 @@ export default {
       return this.regions.flatMap((reg) => reg.itemPoorDepts || []);
     },
 
-    // 🔹 Global totals for all departments in all regions
+    // ✅ ALL items (not only "new")
     totalDeptCounts() {
-      let ge = 0; // items ≥ employees
-      let lt = 0; // items < employees
+      let ge = 0; // departments where total items ≥ employees
+      let lt = 0; // departments where total items < employees
+
+      let totalSurplus = 0; // extra devices (all items)
+      let totalShortage = 0; // missing devices (all items)
+
+      const deptDiffs = [];
 
       for (const reg of this.regions || []) {
-        ge += reg.deptItemGECount || 0;
-        lt += reg.deptItemLTCount || 0;
+        for (const div of reg.divisions || []) {
+          for (const dept of div.departments || []) {
+            // employee count in this dept
+            const empCount =
+              typeof dept.empCount === "number"
+                ? dept.empCount
+                : Array.isArray(dept.employees)
+                ? dept.employees.length
+                : 0;
+
+            // 🔴 HERE is the difference from totalDeptCountsNew:
+            //     we use ALL items, not only tag === "new"
+            const allItemsCount = Array.isArray(dept.items)
+              ? dept.items.length
+              : 0;
+
+            const diff = allItemsCount - empCount;
+
+            if (diff >= 0) {
+              ge++;
+              totalSurplus += diff;
+            } else {
+              lt++;
+              totalShortage += -diff;
+            }
+
+            deptDiffs.push({
+              regionKey: reg.regionKey,
+              regionLabel: reg.regionLabel,
+              divisionCode: div.divisionCode,
+              ccLongCode: dept.ccLongCode,
+              ccShortName: dept.ccShortName,
+              empCount,
+              allItemsCount,
+              diff, // positive = surplus devices, negative = shortage
+            });
+          }
+        }
       }
 
       return {
-        ge, // number of departments with items ≥ employees
-        lt, // number of departments with items < employees
-        total: ge + lt, // total departments (with device data)
+        ge, // แผนกที่ "คอมทั้งหมด" ≥ จำนวนพนักงาน
+        lt, // แผนกที่ "คอมทั้งหมด" < จำนวนพนักงาน
+        total: ge + lt, // จำนวนแผนกที่มีข้อมูลพนักงาน
+        totalSurplus, // รวมจำนวนเครื่องที่เกิน (จากทุกแผนก)
+        totalShortage, // รวมจำนวนเครื่องที่ขาด (จากทุกแผนก)
+        deptDiffs, // รายละเอียดรายแผนก (ถ้าจะเอาไปแสดงในตาราง)
       };
     },
 
@@ -774,15 +495,14 @@ export default {
       };
     },
 
-    // 🔹 Global department summary based only on "new" devices
     totalDeptCountsNew() {
-      let ge = 0; // items(new) >= employees
-      let lt = 0; // items(new) < employees
+      let ge = 0;
+      let lt = 0;
 
-      let totalSurplus = 0; // sum of (newItemsCount - empCount) where diff > 0
-      let totalShortage = 0; // sum of (empCount - newItemsCount) where diff < 0
+      let totalSurplus = 0;
+      let totalShortage = 0;
 
-      const deptDiffs = []; // optional: per-department detail
+      const deptDiffs = [];
 
       for (const reg of this.regions || []) {
         for (const div of reg.divisions || []) {
@@ -840,7 +560,6 @@ export default {
         // 👉 global gap metrics
         totalSurplus, // รวมจำนวน "คอมใหม่ที่เกินจากจำนวนพนักงาน" ทุกแผนก
         totalShortage, // รวมจำนวน "คอมใหม่ที่ขาดจากจำนวนพนักงาน" ทุกแผนก
-
         // 👉 optional: per-department details (you can use in a table)
         deptDiffs,
       };
@@ -920,18 +639,28 @@ export default {
     employeesWithoutAnyDevice() {
       const map = new Map();
 
+      const add = (e) => {
+        if (!e) return;
+
+        const id = this.getEmpId(e);
+        const name = (e.empName ?? e.emp_name ?? "").trim();
+
+        // Prefer ID-based key, fallback to name
+        const key = id != null ? `id:${id}` : `name:${name}`;
+
+        if (!map.has(key)) {
+          map.set(key, e);
+        }
+      };
+
       // 1) employees whose dept never shows up in regions() (no devices in that dept)
       for (const e of this.employeesMissingFromDepartments || []) {
-        const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
-        map.set(key, e);
+        add(e);
       }
 
       // 2) employees in regions/departments but not owner of any device
       for (const e of this.employeesWithDeptButNoDevice || []) {
-        const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
-        if (!map.has(key)) {
-          map.set(key, e);
-        }
+        add(e);
       }
 
       return Array.from(map.values());
@@ -951,10 +680,12 @@ export default {
         });
 
         if (tag === "old") {
-          const id = r.empId ?? r.emp_id ?? r.emId ?? r.em_id;
+          const id = this.getEmpId(r);
           if (id != null) owners.add(String(id));
         }
       }
+
+      // console.log("[DEBUG] oldDeviceOwners:", Array.from(owners));
 
       return owners;
     },
@@ -962,17 +693,42 @@ export default {
     employeesWithoutAnyDevice_OwnOldDevice() {
       const oldOwners = this.oldDeviceOwners;
 
-      return this.employeesWithoutAnyDevice.filter((e) =>
-        oldOwners.has(String(e.empId))
-      );
+      // const employees = this.employeesWithoutAnyDevice || [];
+
+      // console.log("[DEBUG] oldOwners size:", oldOwners.size);
+      // console.log("[DEBUG] employeesWithoutAnyDevice count:", employees.length);
+
+      // const withId = employees.filter((e) => this.getEmpId(e) != null);
+      // console.log("[DEBUG] employeesWithoutAnyDevice withId:", withId.length);
+
+      // // show first few employees + ids
+      // console.log(
+      //   "[DEBUG] sample employeesWithoutAnyDevice ids:",
+      //   employees.slice(0, 10).map((e) => ({
+      //     empIdRaw: e.empId,
+      //     emp_idRaw: e.emp_id,
+      //     emIdRaw: e.emId,
+      //     em_idRaw: e.em_id,
+      //     normalizedId: this.getEmpId(e),
+      //     name: e.empName ?? e.emp_name,
+      //   }))
+      // );
+
+      return this.employeesWithoutAnyDevice.filter((e) => {
+        const id = this.getEmpId(e);
+        if (id == null) return false; // ไม่มี id → ถือว่า match ไม่ได้
+        return oldOwners.has(String(id));
+      });
     },
 
     employeesWithoutAnyDevice_NoDeviceAtAll() {
       const oldOwners = this.oldDeviceOwners;
 
-      return this.employeesWithoutAnyDevice.filter(
-        (e) => !oldOwners.has(String(e.empId))
-      );
+      return this.employeesWithoutAnyDevice.filter((e) => {
+        const id = this.getEmpId(e);
+        if (id == null) return true; // ไม่มี id → นับเป็น "ไม่เคยมี device" ก็ได้
+        return !oldOwners.has(String(id));
+      });
     },
 
     deptNewDeviceStats() {
@@ -1093,7 +849,6 @@ export default {
     },
 
     deptViewLabel() {
-      console.log("deptViewLabel : ", this.deptViewMode);
       switch (this.deptViewMode) {
         case "all-ge":
           return "แผนกที่ “คอมทั้งหมด” เพียงพอหรือเกินจำนวนพนักงาน";
@@ -1197,11 +952,54 @@ export default {
         );
       });
     },
+
+    debugEmployeePartition() {
+      const totalEmployees = (this.employees || []).length;
+      const newCount = this.newDeviceOwners.length;
+      const oldCount = this.oldDeviceOwners.length;
+      const noneCount = this.empNotOwnAnyDevice.length;
+
+      const sum = newCount + oldCount + noneCount;
+
+      console.log("[DEBUG employee partition]", {
+        totalEmployees,
+        new: newCount,
+        old: oldCount,
+        none: noneCount,
+        sum,
+        ok: sum === totalEmployees,
+      });
+
+      return {
+        totalEmployees,
+        new: newCount,
+        old: oldCount,
+        none: noneCount,
+        sum,
+        ok: sum === totalEmployees,
+      };
+    },
   },
 
   watch: {
     "modelCC.ccLongCode"(val) {
       if (val) this.jumpToCc(val);
+    },
+
+    employees: {
+      immediate: true,
+      handler() {
+        // console.log("[WATCH employees]", {
+        //   totalEmployees: this.employees.length,
+        //   new: this.newDeviceOwners.length,
+        //   old: this.oldDeviceOwners.length,
+        //   none: this.empNotOwnAnyDevice.length,
+        //   sum:
+        //     this.newDeviceOwners.length +
+        //     this.oldDeviceOwners.length +
+        //     this.empNotOwnAnyDevice.length,
+        // });
+      },
     },
   },
 
@@ -1217,26 +1015,8 @@ export default {
         // this.overall(),
       ]);
       this.overallSummary = this.overall();
-      console.log(
-        "employeesMissingFromDepartments:",
-        this.employeesMissingFromDepartments
-      );
-      console.log("count:", this.employeesMissingFromDepartments.length);
 
-      console.log(
-        "employeesWithDeptButNoDevice:",
-        this.employeesWithDeptButNoDevice
-      );
-      console.log("count:", this.employeesWithDeptButNoDevice.length);
-
-      console.log("employeesWithoutAnyDevice:", this.employeesWithoutAnyDevice);
-      console.log("count:", this.employeesWithoutAnyDevice.length);
-
-      console.log(
-        "employeesWithoutAnyDevice_OwnOldDevice:",
-        this.employeesWithoutAnyDevice_OwnOldDevice
-      );
-      console.log("count:", this.employeesWithoutAnyDevice_OwnOldDevice.length);
+      this.debugEmployeePartition;
 
       this.loading = false;
     },
@@ -1256,7 +1036,7 @@ export default {
         //   yearMonth: item[2],
         // }));
         this.rows = this.deviceByDep;
-        console.log("getCountDeviceByDep-rows", this.rows);
+        console.log("getCountDeviceByDep-rows", this.rows.slice(0, 1));
       } catch (error) {
         console.error(error);
       } finally {
@@ -1319,17 +1099,9 @@ export default {
         this.alert = true;
         window.setInterval(() => {
           this.alert = false;
-          // console.log("hide alert after 3 seconds");
           this.loading = false;
         }, 3000);
       } else {
-        console.log(this.modelCC["ccLongCode"]);
-        // let params = [];
-
-        // params = {
-        //   region: this.modelCC["ccLongCode"],
-        // };
-
         this.loading = false;
       }
     },
@@ -1359,7 +1131,7 @@ export default {
         const response = await axios.get(
           `${process.env.VUE_APP_BASE_URL}/cc/getAllCCOnlyUse`
         );
-        console.log("itemsCC123: ", response);
+        // console.log("itemsCC123: ", response);
         this.itemsCC = response.data.costCenter.map((item) => ({
           ccLongCode: item[0],
           ccShortName: item[1],
@@ -1387,23 +1159,15 @@ export default {
     },
 
     updateCC(modelCC) {
-      console.log("modelCC update " + modelCC.ccLongCode);
-
       this.modelCC = modelCC;
-
       this.modelEmp = null;
     },
 
     updateCCFromEmp(modelEmp) {
-      // console.log("modelCC update " + modelEmp.ccLongCode);
-
       var result = this.itemsCC.find(
         (item) => item.ccLongCode === modelEmp.ccLongCode
       );
-      // console.log("result " + result.ccLongCode);
       this.modelCC = result;
-      // how can I have here the index value?
-      console.log("modelCC update " + JSON.stringify(this.modelCC));
     },
 
     jumpToCc(ccLongCode) {
@@ -1558,13 +1322,11 @@ export default {
       for (const e of this.itemsEmp || []) {
         allEmpIds.add(String(e.empId));
       }
-      console.log("allEmpIds", allEmpIds);
 
       const unownedIds = new Set();
       for (const id of allEmpIds) {
         if (!ownerIds.has(id)) unownedIds.add(id);
       }
-      console.log("unownedIds", unownedIds);
 
       const employeesById = new Map(
         (this.itemsEmp || []).map((e) => [String(e.empId), e])
@@ -1643,6 +1405,81 @@ export default {
       const code = String(ccLongCode).trim().toUpperCase();
       // keep exactly 7 chars for division
       return code.substring(0, 7);
+    },
+
+    getEmpId(obj) {
+      return obj.empId ?? obj.emp_id ?? obj.emId ?? obj.em_id ?? null;
+    },
+
+    oldOwnersAny() {
+      const s = new Set();
+
+      for (const r of this.rows || []) {
+        const devReceivedDate =
+          r.devReceivedDate || r.dev_received_date || null;
+
+        const tag = this.tagRowByYear({ ...r, devReceivedDate });
+
+        if (tag === "old" || tag === "unknown") {
+          const id = this.getEmpId(r);
+          if (id != null) s.add(String(id).trim());
+        }
+      }
+
+      return s;
+    },
+
+    newOwnersAny() {
+      const s = new Set();
+
+      for (const r of this.rows || []) {
+        const devReceivedDate =
+          r.devReceivedDate || r.dev_received_date || null;
+
+        const tag = this.tagRowByYear({ ...r, devReceivedDate });
+
+        if (tag === "new") {
+          const id = this.getEmpId(r);
+          if (id != null) s.add(String(id).trim());
+        }
+      }
+
+      return s;
+    },
+
+    newDeviceOwners() {
+      const N = this.newOwnersAny;
+
+      return (this.employees || []).filter((e) => {
+        const id = this.getEmpId(e);
+        return id != null && N.has(String(id).trim());
+      });
+    },
+
+    oldDeviceOwners() {
+      const O = this.oldOwnersAny;
+      const N = this.newOwnersAny;
+
+      return (this.employees || []).filter((e) => {
+        const id = this.getEmpId(e);
+        if (id == null) return false;
+
+        const sid = String(id).trim();
+        return O.has(sid) && !N.has(sid);
+      });
+    },
+
+    empNotOwnAnyDevice() {
+      const O = this.oldOwnersAny;
+      const N = this.newOwnersAny;
+
+      return (this.employees || []).filter((e) => {
+        const id = this.getEmpId(e);
+        if (id == null) return true;
+
+        const sid = String(id).trim();
+        return !O.has(sid) && !N.has(sid);
+      });
     },
   },
 };

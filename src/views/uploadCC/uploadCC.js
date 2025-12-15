@@ -73,7 +73,6 @@ export default {
 
   methods: {
     triggerFileSelect() {
-      console.log("triggerFileSelect called");
       this.$refs.fileInput.click();
     },
     onFileSelected(event) {
@@ -100,7 +99,6 @@ export default {
         this.selectedFile = file;
         this.fileName = file.name;
         this.alert = false;
-        console.log("✅ Valid Excel file selected:", this.fileName);
         // Optional: auto upload or validate here
       }
     },
@@ -109,7 +107,6 @@ export default {
       this.readLoading = true;
       this.uploadFinish = false;
 
-      console.log("XLSX", XLSX);
       if (!this.selectedFile) {
         this.alert = true;
         setTimeout(() => {
@@ -126,20 +123,20 @@ export default {
       reader.onload = (e) => {
         const data = new Uint8Array(e.target.result);
         try {
-          console.log("check5", XLSX.utils);
+          // console.log("check5", XLSX.utils);
           const workbook = XLSX.read(data, { type: "array" });
-          console.log("check3", workbook);
+          // console.log("check3", workbook);
 
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
 
-          console.log("check4", worksheet);
+          // console.log("check4", worksheet);
 
           const rows = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
             defval: "",
           });
-          console.log("✅ rows", rows);
+          // console.log("✅ rows", rows);
 
           const headerRowIndex = rows.findIndex((row) => {
             if (!Array.isArray(row)) return false;
@@ -243,9 +240,7 @@ export default {
       this.uploadAbortController = new AbortController();
       this.processLoading = true;
       this.uploadFinish = false;
-      //   console.log("uploadItems[0]", this.uploadItems[0]);
 
-      console.log("📄 Previewing 5 rows from Excel...");
       const preview = await this.previewExcelRows(this.selectedFile);
       console.table(preview);
       try {
@@ -261,9 +256,6 @@ export default {
             headers: { "Content-Type": "multipart/form-data" },
           }
         );
-
-        console.log("📦 Response:", resp.data);
-
         const { inserted, updated } = resp.data;
 
         this.uploadFinish = true;
@@ -299,7 +291,7 @@ export default {
           `${process.env.VUE_APP_BASE_URL}/cc/all`
         );
 
-        console.log("📦 Fetch CC DB Response:", resp.data);
+
 
         this.tableItemsCC = resp.data.map((item) => ({
           cc_long_code: item.cc_long_code,
