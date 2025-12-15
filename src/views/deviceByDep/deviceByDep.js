@@ -68,10 +68,7 @@ export default {
 
       detailMode: "dept",
 
-      // totalDeptCounts: {
-      //   ge: 0,
-      //   lt: 0,
-      // },
+      // employees: [],
     };
   },
 
@@ -397,13 +394,13 @@ export default {
         .sort((a, b) => String(a.regionKey).localeCompare(String(b.regionKey)));
     },
 
-    allItemRichDepts() {
-      return this.regions.flatMap((reg) => reg.itemRichDepts || []);
-    },
+    // allItemRichDepts() {
+    //   return this.regions.flatMap((reg) => reg.itemRichDepts || []);
+    // },
 
-    allItemPoorDepts() {
-      return this.regions.flatMap((reg) => reg.itemPoorDepts || []);
-    },
+    // allItemPoorDepts() {
+    //   return this.regions.flatMap((reg) => reg.itemPoorDepts || []);
+    // },
 
     // ✅ ALL items (not only "new")
     totalDeptCounts() {
@@ -666,71 +663,6 @@ export default {
       return Array.from(map.values());
     },
 
-    // All employees who own at least one OLD device
-    oldDeviceOwners() {
-      const owners = new Set();
-
-      for (const r of this.rows || []) {
-        const devReceivedDate =
-          r.devReceivedDate || r.dev_received_date || null;
-
-        const tag = this.tagRowByYear({
-          ...r,
-          devReceivedDate,
-        });
-
-        if (tag === "old") {
-          const id = this.getEmpId(r);
-          if (id != null) owners.add(String(id));
-        }
-      }
-
-      // console.log("[DEBUG] oldDeviceOwners:", Array.from(owners));
-
-      return owners;
-    },
-
-    employeesWithoutAnyDevice_OwnOldDevice() {
-      const oldOwners = this.oldDeviceOwners;
-
-      // const employees = this.employeesWithoutAnyDevice || [];
-
-      // console.log("[DEBUG] oldOwners size:", oldOwners.size);
-      // console.log("[DEBUG] employeesWithoutAnyDevice count:", employees.length);
-
-      // const withId = employees.filter((e) => this.getEmpId(e) != null);
-      // console.log("[DEBUG] employeesWithoutAnyDevice withId:", withId.length);
-
-      // // show first few employees + ids
-      // console.log(
-      //   "[DEBUG] sample employeesWithoutAnyDevice ids:",
-      //   employees.slice(0, 10).map((e) => ({
-      //     empIdRaw: e.empId,
-      //     emp_idRaw: e.emp_id,
-      //     emIdRaw: e.emId,
-      //     em_idRaw: e.em_id,
-      //     normalizedId: this.getEmpId(e),
-      //     name: e.empName ?? e.emp_name,
-      //   }))
-      // );
-
-      return this.employeesWithoutAnyDevice.filter((e) => {
-        const id = this.getEmpId(e);
-        if (id == null) return false; // ไม่มี id → ถือว่า match ไม่ได้
-        return oldOwners.has(String(id));
-      });
-    },
-
-    employeesWithoutAnyDevice_NoDeviceAtAll() {
-      const oldOwners = this.oldDeviceOwners;
-
-      return this.employeesWithoutAnyDevice.filter((e) => {
-        const id = this.getEmpId(e);
-        if (id == null) return true; // ไม่มี id → นับเป็น "ไม่เคยมี device" ก็ได้
-        return !oldOwners.has(String(id));
-      });
-    },
-
     deptNewDeviceStats() {
       const result = [];
 
@@ -910,8 +842,8 @@ export default {
       switch (this.employeeViewMode) {
         case "emp-no-new":
           return "พนักงานที่ยังไม่มีคอมพิวเตอร์ใหม่ (≥ 2561)";
-        case "emp-no-new-own-old":
-          return "พนักงานที่ไม่มีคอมใหม่ แต่ยังมีคอมเก่าอย่างน้อย 1 เครื่อง";
+        case "emp-has-new":
+          return "พนักงานที่มีคอมพิวเตอร์ใหม่ อย่างน้อย 1 เครื่อง";
         case "emp-no-any":
           return "พนักงานที่ไม่มีคอมพิวเตอร์เลย (ทั้งใหม่และเก่า)";
         default:
@@ -922,11 +854,11 @@ export default {
     employeeBaseRows() {
       switch (this.employeeViewMode) {
         case "emp-no-new":
-          return this.employeesWithoutAnyDevice || [];
-        case "emp-no-new-own-old":
-          return this.employeesWithoutAnyDevice_OwnOldDevice || [];
+          return this.oldOnlyEmployees || []; // ✅ old/unknown only456
+        case "emp-has-new":
+          return this.newDeviceOwners || []; // ✅ has new (maybe old too)123
         case "emp-no-any":
-          return this.employeesWithoutAnyDevice_NoDeviceAtAll || [];
+          return this.empNotOwnAnyDevice || []; // ✅ owns nothing789
         default:
           return [];
       }
@@ -954,9 +886,12 @@ export default {
     },
 
     debugEmployeePartition() {
-      const totalEmployees = (this.employees || []).length;
+      const totalEmployees = (this.itemsEmp || []).length;
+      //123
       const newCount = this.newDeviceOwners.length;
-      const oldCount = this.oldDeviceOwners.length;
+      //456
+      const oldCount = this.oldOnlyEmployees.length;
+      //789
       const noneCount = this.empNotOwnAnyDevice.length;
 
       const sum = newCount + oldCount + noneCount;
@@ -979,6 +914,80 @@ export default {
         ok: sum === totalEmployees,
       };
     },
+
+    oldOwnersAny() {
+      const s = new Set();
+
+      for (const r of this.rows || []) {
+        const devReceivedDate =
+          r.devReceivedDate || r.dev_received_date || null;
+
+        const tag = this.tagRowByYear({ ...r, devReceivedDate });
+
+        if (tag === "old" || tag === "unknown") {
+          const id = this.getEmpId(r);
+          if (id != null) s.add(String(id).trim());
+        }
+      }
+
+      return s;
+    },
+
+    newOwnersAny() {
+      const s = new Set();
+
+      for (const r of this.rows || []) {
+        const devReceivedDate =
+          r.devReceivedDate || r.dev_received_date || null;
+
+        const tag = this.tagRowByYear({ ...r, devReceivedDate });
+
+        if (tag === "new") {
+          const id = this.getEmpId(r);
+          if (id != null) s.add(String(id).trim());
+        }
+      }
+
+      return s;
+    },
+
+    //123
+    newDeviceOwners() {
+      const N = this.newOwnersAny;
+
+      return (this.itemsEmp || []).filter((e) => {
+        const id = this.getEmpId(e);
+        return id != null && N.has(String(id).trim());
+      });
+    },
+
+    //456
+    oldOnlyEmployees() {
+      const O = this.oldOwnersAny; // Set
+      const N = this.newOwnersAny; // Set
+
+      return (this.itemsEmp || []).filter((e) => {
+        const id = this.getEmpId(e);
+        if (id == null) return false;
+
+        const sid = String(id).trim();
+        return O.has(sid) && !N.has(sid);
+      });
+    },
+
+    //789
+    empNotOwnAnyDevice() {
+      const O = this.oldOwnersAny;
+      const N = this.newOwnersAny;
+
+      return (this.itemsEmp || []).filter((e) => {
+        const id = this.getEmpId(e);
+        if (id == null) return true;
+
+        const sid = String(id).trim();
+        return !O.has(sid) && !N.has(sid);
+      });
+    },
   },
 
   watch: {
@@ -988,17 +997,27 @@ export default {
 
     employees: {
       immediate: true,
-      handler() {
-        // console.log("[WATCH employees]", {
-        //   totalEmployees: this.employees.length,
-        //   new: this.newDeviceOwners.length,
-        //   old: this.oldDeviceOwners.length,
-        //   none: this.empNotOwnAnyDevice.length,
-        //   sum:
-        //     this.newDeviceOwners.length +
-        //     this.oldDeviceOwners.length +
-        //     this.empNotOwnAnyDevice.length,
-        // });
+
+      handler(val) {
+        const employees = Array.isArray(val) ? val : [];
+
+        // if you want, you can also skip logging until data is loaded
+        // if (!employees.length) return;
+
+        //count_new123
+        const newCount = this.newDeviceOwners?.length ?? 0;
+        //count_old456
+        const oldCount = this.oldOnlyEmployees?.length ?? 0;
+        //count_none789
+        const noneCount = this.empNotOwnAnyDevice?.length ?? 0;
+
+        console.log("[WATCH employees]", {
+          totalEmployees: employees.length,
+          new: newCount,
+          old: oldCount,
+          none: noneCount,
+          sum: newCount + oldCount + noneCount,
+        });
       },
     },
   },
@@ -1012,13 +1031,18 @@ export default {
         this.loadCCData(), //load cost_center for region to department data
         this.loadEmpData(), // load employee data
         this.getCountDeviceByDep(), // load device data
-        // this.overall(),
       ]);
       this.overallSummary = this.overall();
-
       this.debugEmployeePartition;
-
       this.loading = false;
+
+      console.log("[DEBUG after loadAllData]", {
+        itemsEmp: this.itemsEmp?.length,
+        rows: this.rows?.length,
+        new: this.newDeviceOwners.length,
+        oldOnly: this.oldOnlyEmployees.length,
+        none: this.empNotOwnAnyDevice.length,
+      });
     },
 
     async getCountDeviceByDep() {
@@ -1036,7 +1060,7 @@ export default {
         //   yearMonth: item[2],
         // }));
         this.rows = this.deviceByDep;
-        console.log("getCountDeviceByDep-rows", this.rows.slice(0, 1));
+        console.log("getCountDeviceByDep-rows", this.rows.slice(100, 101));
       } catch (error) {
         console.error(error);
       } finally {
@@ -1409,77 +1433,6 @@ export default {
 
     getEmpId(obj) {
       return obj.empId ?? obj.emp_id ?? obj.emId ?? obj.em_id ?? null;
-    },
-
-    oldOwnersAny() {
-      const s = new Set();
-
-      for (const r of this.rows || []) {
-        const devReceivedDate =
-          r.devReceivedDate || r.dev_received_date || null;
-
-        const tag = this.tagRowByYear({ ...r, devReceivedDate });
-
-        if (tag === "old" || tag === "unknown") {
-          const id = this.getEmpId(r);
-          if (id != null) s.add(String(id).trim());
-        }
-      }
-
-      return s;
-    },
-
-    newOwnersAny() {
-      const s = new Set();
-
-      for (const r of this.rows || []) {
-        const devReceivedDate =
-          r.devReceivedDate || r.dev_received_date || null;
-
-        const tag = this.tagRowByYear({ ...r, devReceivedDate });
-
-        if (tag === "new") {
-          const id = this.getEmpId(r);
-          if (id != null) s.add(String(id).trim());
-        }
-      }
-
-      return s;
-    },
-
-    newDeviceOwners() {
-      const N = this.newOwnersAny;
-
-      return (this.employees || []).filter((e) => {
-        const id = this.getEmpId(e);
-        return id != null && N.has(String(id).trim());
-      });
-    },
-
-    oldDeviceOwners() {
-      const O = this.oldOwnersAny;
-      const N = this.newOwnersAny;
-
-      return (this.employees || []).filter((e) => {
-        const id = this.getEmpId(e);
-        if (id == null) return false;
-
-        const sid = String(id).trim();
-        return O.has(sid) && !N.has(sid);
-      });
-    },
-
-    empNotOwnAnyDevice() {
-      const O = this.oldOwnersAny;
-      const N = this.newOwnersAny;
-
-      return (this.employees || []).filter((e) => {
-        const id = this.getEmpId(e);
-        if (id == null) return true;
-
-        const sid = String(id).trim();
-        return !O.has(sid) && !N.has(sid);
-      });
     },
   },
 };

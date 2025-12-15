@@ -430,27 +430,27 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <v-chip color="orange lighten-4">
-                      {{ employeesWithoutAnyDevice.length }} คน
+                      {{ oldOnlyEmployees.length }} คน
                     </v-chip>
                   </v-list-item-action>
                 </v-list-item>
 
-                <!-- clickable 2: emp-no-new-own-old -->
+                <!-- clickable 2: emp-has-new -->
                 <v-list-item
                   class="summary-clickable"
                   :class="{
-                    'summary-active': employeeViewMode === 'emp-no-new-own-old',
+                    'summary-active': employeeViewMode === 'emp-has-new',
                   }"
-                  @click="setEmployeeViewModeAndScroll('emp-no-new-own-old')"
+                  @click="setEmployeeViewModeAndScroll('emp-has-new')"
                 >
                   <v-list-item-content>
                     <v-list-item-title>
-                      ในกลุ่มข้างต้น: มีคอมเก่าอย่างน้อย 1 เครื่อง
+                      พนักงานที่มีคอมพิวเตอร์ใหม่ อย่างน้อย 1 เครื่อง
                     </v-list-item-title>
                   </v-list-item-content>
                   <v-list-item-action>
                     <v-chip color="blue lighten-4">
-                      {{ employeesWithoutAnyDevice_OwnOldDevice.length }} คน
+                      {{ newDeviceOwners.length }} คน
                     </v-chip>
                   </v-list-item-action>
                 </v-list-item>
@@ -470,7 +470,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <v-chip color="red lighten-4">
-                      {{ employeesWithoutAnyDevice_NoDeviceAtAll.length }} คน
+                      {{ empNotOwnAnyDevice.length }} คน
                     </v-chip>
                   </v-list-item-action>
                 </v-list-item>
