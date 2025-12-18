@@ -68,6 +68,8 @@ export default {
 
       detailMode: "dept",
 
+      counter: 0,
+
       // employees: [],
     };
   },
@@ -114,10 +116,12 @@ export default {
         const ccShortName = cc.ccShortName || null;
 
         if (!ccLongCodeRaw) continue;
+        if (!cc.ccShortName) console.log("actually missing in itemsCC:", cc);
 
         // 🔹 Region key from CC (reuse your existing logic)
         const regionKey = this.getRegionKeyFromRow({
           ccLongCode: ccLongCodeRaw,
+          ccShortName: cc.ccShortName,
         });
 
         const divisionCode = this.getDivisionCodeFromCc(ccLongCodeRaw);
@@ -171,6 +175,14 @@ export default {
         }
       }
 
+      const itemsCCByCode = new Map(
+        (this.itemsCC || []).map((cc) => [
+          String(cc.ccLongCode).toUpperCase().trim(),
+          cc,
+        ])
+      );
+      this.itemsCCByCode = itemsCCByCode;
+
       // ---- Phase 2: attach device rows to existing departments ----
       const beKey = this.beDateKey;
 
@@ -179,15 +191,27 @@ export default {
         const devReceivedDate =
           r.devReceivedDate || r.dev_received_date || null;
 
+        const deptKey = ccLongCodeRaw
+          ? String(ccLongCodeRaw).toUpperCase().trim()
+          : "UNKNOWN";
+
+        const ccMaster = this.itemsCCByCode?.get(deptKey);
+        const shortName =
+          r.ccShortName || r.cc_short_name || ccMaster?.ccShortName || null;
+
         // tag row by year (new / old / unknown)
         r._tag = this.tagRowByYear({
           ...r,
           devReceivedDate,
         });
 
+        // const regionKey = this.getRegionKeyFromRow({
+        //   ...r,
+        //   ccLongCode: ccLongCodeRaw,
+        // });
         const regionKey = this.getRegionKeyFromRow({
-          ...r,
-          ccLongCode: ccLongCodeRaw,
+          ccLongCode: deptKey,
+          ccShortName: shortName,
         });
 
         // Phase 2 (device rows)
@@ -225,10 +249,6 @@ export default {
           });
         }
         const div = reg.divisions.get(divisionCode);
-
-        const deptKey = ccLongCodeRaw
-          ? String(ccLongCodeRaw).toUpperCase().trim()
-          : "UNKNOWN";
 
         if (!div.departments.has(deptKey)) {
           // department exists in device data but not in itemsCC
@@ -1087,32 +1107,96 @@ export default {
       return "unknown";
     },
 
+    // getRegionKeyFromRow(row) {
+    //   const code = String(row.ccLongCode || "")
+    //     .toUpperCase()
+    //     .trim();
+    //   const short = String(row.ccShortName || "").trim();
+
+    //   // 1) E3010xxxxx -> E3010xx (first 6 chars)
+    //   if (code.startsWith("E3010")) {
+    //     return code.slice(0, 6); // e.g. E30102
+    //   }
+
+    //   // 2 & 3) E301x… (x ≠ 0): split by กฟจ
+    //   if (/^E301/.test(code)) {
+    //     const x = code.charAt(4);
+    //     if (x !== "0") {
+    //       // be lenient: กฟจ or กฟจ. with optional spaces
+    //       const hasGFJ = /กฟจ\.?/u.test(short);
+    //       return hasGFJ ? "E301X-GFJ" : "E301X-OTHER";
+    //     }
+    //     // if it’s somehow E3010 here, rule 1 would have caught it
+    //   }
+
+    //   // Others: E302… E303… -> first 4 chars
+    //   if (/^E30[2-9]/.test(code)) return code.slice(0, 4);
+
+    //   // Fallback: E### (first 4), else first 4 of whatever it is
+    //   const m = code.match(/^E\d{3}/);
+    //   return m ? m[0] : code.slice(0, 4);
+    // },
     getRegionKeyFromRow(row) {
       const code = String(row.ccLongCode || "")
         .toUpperCase()
         .trim();
-      const short = String(row.ccShortName || "").trim();
 
-      // 1) E3010xxxxx -> E3010xx (first 6 chars)
-      if (code.startsWith("E3010")) {
-        return code.slice(0, 6); // e.g. E30102
-      }
+      // const short = String(row.ccShortName || "").trim();
 
-      // 2 & 3) E301x… (x ≠ 0): split by กฟจ
-      if (/^E301/.test(code)) {
-        const x = code.charAt(4);
-        if (x !== "0") {
-          // be lenient: กฟจ or กฟจ. with optional spaces
-          const hasGFJ = /กฟจ\.?/u.test(short);
-          return hasGFJ ? "E301X-GFJ" : "E301X-OTHER";
+      // ---- E301 special handling ----
+      if (code.startsWith("E301")) {
+        const key6 = code.slice(0, 6); // e.g. E30104
+
+        const allowed = new Set([
+          "E30100",
+          "E30101",
+          "E30102",
+          "E30103",
+          "E30110",
+        ]);
+
+        // ✅ Allowed list always wins
+        if (allowed.has(key6)) {
+          return key6;
         }
-        // if it’s somehow E3010 here, rule 1 would have caught it
+
+        const rawShort = row.ccShortName;
+
+        if (!rawShort) {
+          this.counter++;
+          console.warn(
+            "Missing ccShortName for",
+            row.ccLongCode,
+            "-",
+            this.counter
+          );
+        }
+
+        const shortNorm = String(row.ccShortName || "")
+          .replace(/[．。]/g, ".")
+          .replace(/\s+/g, "")
+          .trim();
+
+        console.log("shortNorm", shortNorm, "-", this.counter);
+
+        // ---- Name-based recheck ----
+        // const hasGFJ = shortNorm.includes("กฟจ");
+        const hasGFS = shortNorm.includes("กฟส");
+
+        // กฟส. OR (กฟจ. + กฟส.) → E30110
+        if (hasGFS) {
+          this.counter++;
+          return "E30110";
+        }
+
+        // กฟจ. only or anything else → E301-CEO
+        return "E301-CEO";
       }
 
-      // Others: E302… E303… -> first 4 chars
+      // ---- Others: E302… E303… ----
       if (/^E30[2-9]/.test(code)) return code.slice(0, 4);
 
-      // Fallback: E### (first 4), else first 4 of whatever it is
+      // ---- Fallback ----
       const m = code.match(/^E\d{3}/);
       return m ? m[0] : code.slice(0, 4);
     },
@@ -1160,7 +1244,11 @@ export default {
           ccLongCode: item[0],
           ccShortName: item[1],
           ccFullName: item[2],
+          // ccLongCode: item.cc_long_code,
+          // ccShortName: item[1],
+          // ccFullName: item.cc_full_name,
         }));
+        // console.log("itemsCC sample:", this.itemsCC.slice(0, 3));
       } catch (error) {
         console.error(error);
       } finally {
