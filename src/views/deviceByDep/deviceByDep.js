@@ -1242,11 +1242,10 @@ export default {
         // console.log("itemsCC123: ", response);
         this.itemsCC = response.data.costCenter.map((item) => ({
           ccLongCode: item[0],
-          ccShortName: item[1],
-          ccFullName: item[2],
-          // ccLongCode: item.cc_long_code,
           // ccShortName: item[1],
-          // ccFullName: item.cc_full_name,
+          // ccFullName: item[2],
+          ccShortName: item[1]?.replace(/-บริหาร/g, "").trim(),
+          ccFullName: item[2]?.replace(/-บริหาร/g, "").trim(),
         }));
         // console.log("itemsCC sample:", this.itemsCC.slice(0, 3));
       } catch (error) {

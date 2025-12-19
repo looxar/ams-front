@@ -772,8 +772,14 @@
                   <v-icon medium class="mr-2" color="purple darken-2">
                     mdi-home-city
                   </v-icon>
+
                   <b>
-                    {{ (reg.firstDept && reg.firstDept.ccShortName) || "—" }}
+                    {{
+                      reg.regionKey === "E301-CEO"
+                        ? "กลุ่มบริหาร กฟจ.CEO"
+                        : (reg.firstDept && reg.firstDept.ccShortName) || "—" 
+                    }}
+                    <!-- {{ (reg.firstDept && reg.firstDept.ccShortName) || "—" }} -->
                   </b>
                   <span class="ml-2">
                     {{
