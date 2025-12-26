@@ -65,6 +65,7 @@ export default {
 
       employeeViewMode: "emp-no-new",
       employeeSearch: "",
+      divViewMode: "all",
 
       detailMode: "dept",
 
@@ -653,6 +654,132 @@ export default {
       return result;
     },
 
+    totalDivisionCounts() {
+      let ge = 0; // divisions where total items ≥ employees
+      let lt = 0; // divisions where total items < employees
+
+      let totalSurplus = 0;
+      let totalShortage = 0;
+
+      const divDiffs = [];
+
+      for (const reg of this.regions || []) {
+        for (const div of reg.divisions || []) {
+          // ✅ aggregate inside this division
+          let empCount = 0;
+          let allItemsCount = 0;
+
+          for (const dept of div.departments || []) {
+            const deptEmp =
+              typeof dept.empCount === "number"
+                ? dept.empCount
+                : Array.isArray(dept.employees)
+                ? dept.employees.length
+                : 0;
+
+            const deptItems = Array.isArray(dept.items) ? dept.items.length : 0;
+
+            empCount += deptEmp;
+            allItemsCount += deptItems;
+          }
+
+          const diff = allItemsCount - empCount;
+
+          if (diff >= 0) {
+            ge++;
+            totalSurplus += diff;
+          } else {
+            lt++;
+            totalShortage += -diff;
+          }
+
+          divDiffs.push({
+            regionKey: reg.regionKey,
+            regionLabel: reg.regionLabel,
+            divisionCode: div.divisionCode,
+            empCount,
+            allItemsCount,
+            diff,
+          });
+        }
+      }
+
+      return {
+        ge, // divisions where "all devices" ≥ employees
+        lt, // divisions where "all devices" < employees
+        total: ge + lt,
+        totalSurplus,
+        totalShortage,
+        divDiffs,
+      };
+    },
+
+    totalDivisionCountsNew() {
+      let ge = 0;
+      let lt = 0;
+
+      let totalSurplus = 0;
+      let totalShortage = 0;
+
+      const divDiffs = [];
+
+      for (const reg of this.regions || []) {
+        for (const div of reg.divisions || []) {
+          // ✅ aggregate inside this division
+          let empCount = 0;
+          let newItemsCount = 0;
+
+          for (const dept of div.departments || []) {
+            const deptEmp =
+              typeof dept.empCount === "number"
+                ? dept.empCount
+                : Array.isArray(dept.employees)
+                ? dept.employees.length
+                : 0;
+
+            empCount += deptEmp;
+
+            // count only NEW devices in this dept, then sum into division
+            for (const item of dept.items || []) {
+              const devReceivedDate =
+                item.devReceivedDate || item.dev_received_date || null;
+
+              const tag = this.tagRowByYear({ ...item, devReceivedDate });
+              if (tag === "new") newItemsCount++;
+            }
+          }
+
+          const diff = newItemsCount - empCount;
+
+          if (diff >= 0) {
+            ge++;
+            totalSurplus += diff;
+          } else {
+            lt++;
+            totalShortage += -diff;
+          }
+
+          divDiffs.push({
+            regionKey: reg.regionKey,
+            regionLabel: reg.regionLabel,
+            divisionCode: div.divisionCode,
+            empCount,
+            newItemsCount,
+            diff,
+          });
+        }
+      }
+
+      return {
+        ge, // divisions where "new devices" ≥ employees
+        lt, // divisions where "new devices" < employees
+        total: ge + lt,
+        totalSurplus,
+        totalShortage,
+        divDiffs,
+      };
+    },
+
     employeesWithoutAnyDevice() {
       const map = new Map();
 
@@ -815,9 +942,28 @@ export default {
       }
     },
 
+    divViewLabel() {
+      switch (this.divViewMode) {
+        case "all-ge":
+          return "กฟฟ./กอง ที่ “คอมทั้งหมด” เพียงพอหรือเกินจำนวนพนักงาน";
+        case "all-lt":
+          return "กฟฟ./กอง ที่ “คอมทั้งหมด” ยังไม่เพียงพอกับจำนวนพนักงาน";
+        case "new-ge":
+          return "กฟฟ./กอง ที่ “คอมใหม่ (≥ 2561)” เพียงพอหรือเกินจำนวนพนักงาน";
+        case "new-lt":
+          return "กฟฟ./กอง ที่ “คอมใหม่ (≥ 2561)” ยังไม่เพียงพอกับจำนวนพนักงาน";
+        default:
+          return "";
+      }
+    },
+
     // which metric to use in the table (all vs new)
     deptMetricKey() {
       return this.deptViewMode.startsWith("all") ? "all" : "new";
+    },
+
+    divMetricKey() {
+      return this.divViewMode.startsWith("all") ? "all" : "new";
     },
 
     // base list per mode
@@ -853,6 +999,189 @@ export default {
           region.includes(keyword) ||
           div.includes(keyword) ||
           code.includes(keyword) ||
+          name.includes(keyword)
+        );
+      });
+    },
+
+    divBaseRows() {
+      const map = new Map();
+
+      for (const reg of this.regions || []) {
+        for (const div of reg.divisions || []) {
+          // const key = `${reg.regionKey}__${div.divisionCode}`;
+          const rawDivCode = div.divisionCode;
+          // const groupDivCode = this.getDivGroupCode(rawDivCode);
+          // const key = `${reg.regionKey}__${groupDivCode}`;
+          const { groupCode, groupName } = this.getDivGroupInfo(rawDivCode);
+          const key = `${reg.regionKey}__${groupCode}`;
+
+          if (!map.has(key)) {
+            const firstDept = (div.departments || [])[0] || {};
+
+            map.set(key, {
+              regionKey: reg.regionKey,
+              regionLabel: reg.regionLabel,
+              // ✅ show grouped code in table
+              // divisionCode: groupDivCode,
+              divisionCode: groupCode,
+              // 🔎 debug: keep list of which raw codes got merged into this group
+              _rawDivisionCodes: new Set(),
+
+              // ✅ match your table fields
+              ccLongCode: firstDept.ccLongCode || "", // used by jumpToCc
+              ccShortName: groupName || firstDept.ccShortName || "—",
+
+              empCount: 0,
+              allItemsCount: 0,
+              newItemsCount: 0,
+
+              diffAll: 0,
+              diffNew: 0,
+            });
+          }
+
+          const row = map.get(key);
+          row._rawDivisionCodes.add(String(rawDivCode || "").trim());
+
+          for (const dept of div.departments || []) {
+            // employees
+            const deptEmp =
+              typeof dept.empCount === "number"
+                ? dept.empCount
+                : Array.isArray(dept.employees)
+                ? dept.employees.length
+                : 0;
+
+            row.empCount += deptEmp;
+
+            // items
+            for (const item of dept.items || []) {
+              row.allItemsCount++;
+
+              const devReceivedDate =
+                item.devReceivedDate || item.dev_received_date || null;
+
+              const tag = this.tagRowByYear({ ...item, devReceivedDate });
+              if (tag === "new") row.newItemsCount++;
+            }
+
+            // (optional) if ccLongCode/ccShortName missing on firstDept, fill fallback from first dept that has values
+            if (!row.ccLongCode && dept.ccLongCode)
+              row.ccLongCode = dept.ccLongCode;
+            if (
+              (row.ccShortName === "—" || !row.ccShortName) &&
+              dept.ccShortName
+            )
+              row.ccShortName = dept.ccShortName;
+          }
+
+          row.diffAll = row.allItemsCount - row.empCount;
+          row.diffNew = row.newItemsCount - row.empCount;
+        }
+      }
+
+      const rows = Array.from(map.values()).map((r) => ({
+        ...r,
+        _rawDivisionCodes: Array.from(r._rawDivisionCodes),
+      }));
+      return rows;
+      // return Array.from(map.values());
+    },
+
+    filteredDivRows() {
+      const keyword = (this.surplusSearch || "").toLowerCase().trim();
+      const src = this.divBaseRows;
+
+      if (!keyword) return src;
+
+      return src.filter((d) => {
+        const region = (d.regionLabel || d.regionKey || "").toLowerCase();
+        const div = (d.divisionCode || "").toLowerCase();
+        const code = (d.ccLongCode || "").toLowerCase();
+        const name = (d.ccShortName || "").toLowerCase();
+
+        return (
+          region.includes(keyword) ||
+          div.includes(keyword) ||
+          code.includes(keyword) ||
+          name.includes(keyword)
+        );
+      });
+    },
+
+    divBaseRowsNew() {
+      const map = new Map();
+
+      for (const reg of this.regions || []) {
+        for (const div of reg.divisions || []) {
+          const key = `${reg.regionKey}__${div.divisionCode}`;
+
+          if (!map.has(key)) {
+            const firstDept = (div.departments || [])[0] || {};
+
+            map.set(key, {
+              regionKey: reg.regionKey,
+              regionLabel: reg.regionLabel,
+              divisionCode: div.divisionCode,
+
+              // show 1st dept short name as division label (your idea)
+              divisionName:
+                firstDept.ccShortName || firstDept.ccLongCode || "—",
+
+              empCount: 0,
+              newItemsCount: 0,
+              diff: 0,
+            });
+          }
+
+          const row = map.get(key);
+
+          for (const dept of div.departments || []) {
+            // sum employees in division
+            const deptEmp =
+              typeof dept.empCount === "number"
+                ? dept.empCount
+                : Array.isArray(dept.employees)
+                ? dept.employees.length
+                : 0;
+
+            row.empCount += deptEmp;
+
+            // sum NEW devices in division (across all departments)
+            for (const item of dept.items || []) {
+              const devReceivedDate =
+                item.devReceivedDate || item.dev_received_date || null;
+
+              const tag = this.tagRowByYear({
+                ...item,
+                devReceivedDate,
+              });
+
+              if (tag === "new") row.newItemsCount++;
+            }
+          }
+
+          row.diff = row.newItemsCount - row.empCount;
+        }
+      }
+
+      return Array.from(map.values());
+    },
+
+    filteredDivRowsNew() {
+      const keyword = (this.surplusSearch || "").toLowerCase().trim();
+      const src = this.divBaseRowsNew;
+
+      if (!keyword) return src;
+
+      return src.filter((d) => {
+        const region = (d.regionLabel || d.regionKey || "").toLowerCase();
+        const div = (d.divisionCode || "").toLowerCase();
+        const name = (d.divisionName || "").toLowerCase();
+        return (
+          region.includes(keyword) ||
+          div.includes(keyword) ||
           name.includes(keyword)
         );
       });
@@ -1201,6 +1530,69 @@ export default {
       return m ? m[0] : code.slice(0, 4);
     },
 
+    // getDivGroupCode(divisionCodeRaw) {
+    //   const code = String(divisionCodeRaw || "").trim();
+    //   if (!code) return "";
+
+    //   // handle later -> leave as-is
+    //   if (code.startsWith("E3010") || code.startsWith("E3000")) return code;
+
+    //   // ✅ broaden: group all E3xxx.. (E302..E309, E310.., E311.. etc.)
+    //   if (!code.startsWith("E3")) return code;
+
+    //   // if already ends with 01 -> standalone
+    //   if (code.endsWith("01")) return code;
+
+    //   // otherwise group to same code ending with 01
+    //   if (code.length < 2) return code;
+    //   return code.slice(0, -2) + "01";
+    // },
+
+    getDivGroupInfo(divisionCodeRaw) {
+      const code = String(divisionCodeRaw || "").trim();
+      if (!code) return { groupCode: "", groupName: "—" };
+
+      // ❌ explicit exclusion
+      if (code === "E301101") {
+        return { groupCode: code, groupName: "" };
+      }
+
+      // ✅ Special bucket: E3010xxx ending with specific 3-digit suffix -> E301-CEO
+      const ceoEndings = new Set([
+        "041",
+        "051",
+        "061",
+        "071",
+        "081",
+        "091",
+        "101",
+        "111",
+        "121",
+      ]);
+      const last3 = code.slice(-3);
+
+      if (code.startsWith("E301") && ceoEndings.has(last3)) {
+        return {
+          groupCode: "E301-CEO",
+          groupName: "E301-CEO",
+        };
+      }
+
+      // (keep your "handle later" rule for the remaining E3010 / E3000)
+      if (code.startsWith("E3000")) {
+        return { groupCode: code, groupName: "" }; // name can be filled later from dept
+      }
+
+      // ✅ General E3 grouping (E302..E309, E310.. etc.)
+      if (!code.startsWith("E3")) return { groupCode: code, groupName: "" };
+
+      if (code.endsWith("01")) return { groupCode: code, groupName: "" };
+
+      if (code.length < 2) return { groupCode: code, groupName: "" };
+
+      return { groupCode: code.slice(0, -2) + "01", groupName: "" };
+    },
+
     async checkQuotaByDep() {
       this.loading = true;
       if (this.modelCC == null) {
@@ -1371,6 +1763,8 @@ export default {
         targetRef = this.$refs.surplusSection;
       } else if (this.detailMode === "emp") {
         targetRef = this.$refs.employeeSection;
+      } else if (this.detailMode === "div") {
+        targetRef = this.$refs.divSection;
       }
       if (!targetRef) return;
 
@@ -1496,6 +1890,31 @@ export default {
         const el =
           this.$refs.employeeSection ||
           document.getElementById("employee-section");
+
+        if (el) {
+          if (this.$vuetify && this.$vuetify.goTo) {
+            this.$vuetify.goTo(el, {
+              duration: 600,
+              offset: 80,
+              easing: "easeInOutCubic",
+            });
+          } else {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      });
+    },
+
+    setDivViewModeAndScroll(mode) {
+      this.detailMode = "div"; // 👈 switch to division detail mode
+      this.divViewMode = mode; // 👈 store which division view (surplus/shortage/etc.)
+
+      this.$nextTick(() => {
+        const el =
+          this.$refs.divisionSection || // ✅ recommended: create a dedicated ref
+          this.$refs.surplusSection || // fallback if you reuse same card
+          document.getElementById("division-section") ||
+          document.getElementById("surplus-section");
 
         if (el) {
           if (this.$vuetify && this.$vuetify.goTo) {

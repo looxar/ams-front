@@ -486,7 +486,7 @@
                 <v-list-item
                   class="summary-clickable stat-list-item"
                   :class="{ 'summary-active': deptViewMode === 'all-ge' }"
-                  @click="setDeptViewModeAndScroll('all-ge')"
+                  @click="setDivViewModeAndScroll('all-ge')"
                 >
                   <v-list-item-content>
                     <v-list-item-title class="list-title text-body-2">
@@ -495,7 +495,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--primary">
-                      {{ totalDeptCounts.ge }} หน่วยงาน
+                      {{ totalDivisionCounts.ge }} หน่วยงาน
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -503,7 +503,7 @@
                 <v-list-item
                   class="summary-clickable"
                   :class="{ 'summary-active': deptViewMode === 'all-lt' }"
-                  @click="setDeptViewModeAndScroll('all-lt')"
+                  @click="setDivViewModeAndScroll('all-lt')"
                 >
                   <v-list-item-content>
                     <v-list-item-title class="list-title text-body-2">
@@ -512,7 +512,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--warning">
-                      {{ totalDeptCounts.lt }} หน่วยงาน
+                      {{ totalDivisionCounts.lt }} หน่วยงาน
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -522,7 +522,7 @@
                 <v-list-item
                   class="summary-clickable"
                   :class="{ 'summary-active': deptViewMode === 'new-ge' }"
-                  @click="setDeptViewModeAndScroll('new-ge')"
+                  @click="setDivViewModeAndScroll('new-ge')"
                 >
                   <v-list-item-content>
                     <v-list-item-title class="list-title text-body-2">
@@ -534,7 +534,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--success">
-                      {{ totalDeptCountsNew.ge }} หน่วยงาน
+                      {{ totalDivisionCountsNew.ge }} หน่วยงาน
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -542,7 +542,7 @@
                 <v-list-item
                   class="summary-clickable"
                   :class="{ 'summary-active': deptViewMode === 'new-lt' }"
-                  @click="setDeptViewModeAndScroll('new-lt')"
+                  @click="setDivViewModeAndScroll('new-lt')"
                 >
                   <v-list-item-content>
                     <v-list-item-title class="list-title text-body-2">
@@ -554,7 +554,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--cyan">
-                      {{ totalDeptCountsNew.lt }} หน่วยงาน
+                      {{ totalDivisionCountsNew.lt }} หน่วยงาน
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -654,7 +654,94 @@
             </v-card-text>
           </v-card>
 
-          <v-card outlined class="mt-4" v-else ref="employeeSection">
+          <v-card
+            class="card-top-border"
+            v-if="detailMode === 'div'"
+            ref="divSection"
+          >
+            <v-card-title class="subtitle-1 font-weight-bold card-top-border">
+              <v-icon left color="teal">mdi-view-list</v-icon>
+              {{ divViewLabel }}
+            </v-card-title>
+
+            <v-card-text
+              ><v-row dense>
+                <!-- 🔍 Search bar -->
+                <v-text-field
+                  v-model="surplusSearch"
+                  label="ค้นหาแผนก / รหัส / กฟฟ. / ภาค"
+                  dense
+                  clearable
+                  prepend-inner-icon="mdi-magnify"
+                  class="mb-0"
+                ></v-text-field>
+                <div class="mt-0">
+                  <small class="grey--text">
+                    คลิกที่แถวเพื่อเลื่อนไปยังรายละเอียดแผนกด้านล่าง
+                  </small>
+                </div></v-row
+              >
+              <div class="scroll-table-10 mt-2">
+                <v-simple-table dense>
+                  <thead>
+                    <tr>
+                      <th>กลุ่มหน่วยงาน</th>
+                      <th>ชื่อหน่วยงาน</th>
+                      <th>พนักงาน</th>
+                      <th>
+                        {{
+                          divMetricKey === "all"
+                            ? "คอมทั้งหมด"
+                            : "คอมใหม่ (≥ 2561)"
+                        }}
+                      </th>
+                      <th>
+                        ส่วนต่าง ({{
+                          divMetricKey === "all"
+                            ? "คอมทั้งหมด - พนักงาน"
+                            : "คอมใหม่ - พนักงาน"
+                        }})
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- :key="d.divisionCode" -->
+                    <tr
+                      v-for="d in filteredDivRows"
+                      :key="`${d.regionKey}-${d.divisionCode}`"
+                      class="clickable-row"
+                      @click="jumpToCc(d.ccLongCode)"
+                    >
+                      <td>{{ d.divisionCode }}</td>
+                      <td>{{ d.ccShortName }}</td>
+                      <td>{{ d.empCount }}</td>
+                      <td>
+                        {{
+                          divMetricKey === "all"
+                            ? d.allItemsCount
+                            : d.newItemsCount
+                        }}
+                      </td>
+                      <td
+                        :class="{
+                          'green--text':
+                            (divMetricKey === 'all' ? d.diffAll : d.diffNew) >
+                            0,
+                          'red--text':
+                            (divMetricKey === 'all' ? d.diffAll : d.diffNew) <
+                            0,
+                        }"
+                      >
+                        {{ divMetricKey === "all" ? d.diffAll : d.diffNew }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </v-simple-table>
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <v-card outlined class="mt-4" v-if="detailMode === 'emp'" ref="employeeSection">
             <v-card-title class="subtitle-1 font-weight-bold">
               <v-icon left color="deep-orange">mdi-account-search</v-icon>
               {{ employeeViewLabel }}
