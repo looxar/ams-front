@@ -705,12 +705,6 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <!-- <tr
-                      v-for="d in filteredDivRowsNew"
-                      :key="`${d.regionKey}-${d.divisionCode}`"
-                      class="clickable-row"
-                      @click="jumpToCc(d.ccLongCode)"
-                    > -->
                     <tr
                       v-for="d in displayedDivRows"
                       :key="`${d.regionKey}-${d.divisionCode}`"
@@ -720,7 +714,8 @@
                       <td>{{ d.divisionCode }}</td>
                       <td>{{ d.divisionName }}</td>
                       <td>{{ d.empCount }}</td>
-                      <td>{{ d.newItemsCount }}</td>
+                      <td v-if="divMetricKey === 'all'">{{ d.allItemsCount }}</td>
+                      <td v-else>{{ d.newItemsCount }}</td>
                       <td
                         :class="{
                           'green--text': d.diff > 0,
