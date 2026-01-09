@@ -654,63 +654,131 @@ export default {
       return result;
     },
 
-    totalDivisionCounts() {
-      let ge = 0; // divisions where total items ≥ employees
-      let lt = 0; // divisions where total items < employees
-
-      let totalSurplus = 0;
-      let totalShortage = 0;
-
-      const divDiffs = [];
+    divBaseRowsAll() {
+      const rows = [];
 
       for (const reg of this.regions || []) {
         for (const div of reg.divisions || []) {
-          // ✅ aggregate inside this division
           let empCount = 0;
           let allItemsCount = 0;
 
-          for (const dept of div.departments || []) {
-            const deptEmp =
-              typeof dept.empCount === "number"
-                ? dept.empCount
-                : Array.isArray(dept.employees)
-                ? dept.employees.length
-                : 0;
+          const firstDept = (div.departments || [])[0] || {};
+          const divisionName =
+            firstDept.ccShortName || firstDept.ccLongCode || "—";
+          const ccLongCode =
+            firstDept.ccLongCode || firstDept.cc_long_code || null;
 
-            const deptItems = Array.isArray(dept.items) ? dept.items.length : 0;
+          for (const dept of div.departments || []) {
+            const deptEmp = Number.isFinite(dept.empCount)
+              ? dept.empCount
+              : Array.isArray(dept.employees)
+              ? dept.employees.length
+              : 0;
 
             empCount += deptEmp;
-            allItemsCount += deptItems;
+
+            allItemsCount += Array.isArray(dept.items) ? dept.items.length : 0;
           }
 
-          const diff = allItemsCount - empCount;
-
-          if (diff >= 0) {
-            ge++;
-            totalSurplus += diff;
-          } else {
-            lt++;
-            totalShortage += -diff;
-          }
-
-          divDiffs.push({
+          rows.push({
             regionKey: reg.regionKey,
             regionLabel: reg.regionLabel,
             divisionCode: div.divisionCode,
+            divisionName,
+            ccLongCode,
             empCount,
             allItemsCount,
-            diff,
+            diff: allItemsCount - empCount,
           });
         }
       }
 
+      return rows;
+    },
+
+    // totalDivisionCounts() {
+    //   let ge = 0; // divisions where total items ≥ employees
+    //   let lt = 0; // divisions where total items < employees
+
+    //   let totalSurplus = 0;
+    //   let totalShortage = 0;
+
+    //   const divDiffs = [];
+
+    //   for (const reg of this.regions || []) {
+    //     for (const div of reg.divisions || []) {
+    //       // ✅ aggregate inside this division
+    //       let empCount = 0;
+    //       let allItemsCount = 0;
+
+    //       for (const dept of div.departments || []) {
+    //         const deptEmp =
+    //           typeof dept.empCount === "number"
+    //             ? dept.empCount
+    //             : Array.isArray(dept.employees)
+    //             ? dept.employees.length
+    //             : 0;
+
+    //         const deptItems = Array.isArray(dept.items) ? dept.items.length : 0;
+
+    //         empCount += deptEmp;
+    //         allItemsCount += deptItems;
+    //       }
+
+    //       const diff = allItemsCount - empCount;
+
+    //       if (diff >= 0) {
+    //         ge++;
+    //         totalSurplus += diff;
+    //       } else {
+    //         lt++;
+    //         totalShortage += -diff;
+    //       }
+
+    //       divDiffs.push({
+    //         regionKey: reg.regionKey,
+    //         regionLabel: reg.regionLabel,
+    //         divisionCode: div.divisionCode,
+    //         empCount,
+    //         allItemsCount,
+    //         diff,
+    //       });
+    //     }
+    //   }
+
+    //   return {
+    //     ge, // divisions where "all devices" ≥ employees
+    //     lt, // divisions where "all devices" < employees
+    //     total: ge + lt,
+    //     totalSurplus,
+    //     totalShortage,
+    //     divDiffs,
+    //   };
+    // },
+
+    totalDivisionCounts() {
+      let ge = 0,
+        lt = 0,
+        totalSurplus = 0,
+        totalShortage = 0;
+
+      for (const d of this.divBaseRowsAll) {
+        if (d.diff >= 0) {
+          ge++;
+          totalSurplus += d.diff;
+        } else {
+          lt++;
+          totalShortage += -d.diff;
+        }
+      }
+
       return {
-        ge, // divisions where "all devices" ≥ employees
-        lt, // divisions where "all devices" < employees
+        ge,
+        lt,
         total: ge + lt,
         totalSurplus,
         totalShortage,
-        divDiffs,
+        divDiffs: this.divBaseRowsAll,
       };
     },
 
@@ -1057,6 +1125,33 @@ export default {
       return rows;
     },
 
+    filteredDivRows() {
+      const keyword = (this.surplusSearch || "").toLowerCase().trim();
+
+      let rows = this.divBaseRowsAll || []; // <- base rows for ALL devices
+
+      // ✅ apply mode filter
+      if (this.divViewMode === "all-ge") {
+        rows = rows.filter((d) => (d.diff ?? 0) >= 0);
+      } else if (this.divViewMode === "all-lt") {
+        rows = rows.filter((d) => (d.diff ?? 0) < 0);
+      }
+
+      // ✅ apply keyword filter
+      if (!keyword) return rows;
+
+      return rows.filter((d) => {
+        const region = (d.regionLabel || d.regionKey || "").toLowerCase();
+        const div = (d.divisionCode || "").toLowerCase();
+        const name = (d.divisionName || "").toLowerCase();
+        return (
+          region.includes(keyword) ||
+          div.includes(keyword) ||
+          name.includes(keyword)
+        );
+      });
+    },
+
     filteredDivRowsNew() {
       const keyword = (this.surplusSearch || "").toLowerCase().trim();
 
@@ -1135,6 +1230,14 @@ export default {
           dept.includes(keyword)
         );
       });
+    },
+
+    displayedDivRows() {
+      // decide by metric type
+      if (this.divMetricKey === "all") {
+        return this.filteredDivRows; // ALL computers
+      }
+      return this.filteredDivRowsNew; // NEW computers
     },
 
     debugEmployeePartition() {
@@ -1811,6 +1914,7 @@ export default {
     setDivViewModeAndScroll(mode) {
       this.detailMode = "div"; // 👈 switch to division detail mode
       this.divViewMode = mode; // 👈 store which division view (surplus/shortage/etc.)
+      console.log("divViewMode set to:", this.divViewMode);
 
       this.$nextTick(() => {
         const el =

@@ -705,9 +705,14 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <!-- :key="d.divisionCode" -->
-                    <tr
+                    <!-- <tr
                       v-for="d in filteredDivRowsNew"
+                      :key="`${d.regionKey}-${d.divisionCode}`"
+                      class="clickable-row"
+                      @click="jumpToCc(d.ccLongCode)"
+                    > -->
+                    <tr
+                      v-for="d in displayedDivRows"
                       :key="`${d.regionKey}-${d.divisionCode}`"
                       class="clickable-row"
                       @click="jumpToCc(d.ccLongCode)"
