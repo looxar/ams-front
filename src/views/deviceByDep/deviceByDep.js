@@ -65,7 +65,7 @@ export default {
 
       employeeViewMode: "emp-no-new",
       employeeSearch: "",
-      divViewMode: "all",
+      divViewMode: "all-ge",
 
       detailMode: "dept",
 
@@ -770,6 +770,11 @@ export default {
         }
       }
 
+      console.log("ge:", ge);
+      console.log("lt:", lt);
+      console.log("totalSurplus:", totalSurplus);
+      console.log("divDiffs:", divDiffs);
+
       return {
         ge, // divisions where "new devices" ≥ employees
         lt, // divisions where "new devices" < employees
@@ -1004,141 +1009,21 @@ export default {
       });
     },
 
-    divBaseRows() {
-      const map = new Map();
-
-      for (const reg of this.regions || []) {
-        for (const div of reg.divisions || []) {
-          // const key = `${reg.regionKey}__${div.divisionCode}`;
-          const rawDivCode = div.divisionCode;
-          // const groupDivCode = this.getDivGroupCode(rawDivCode);
-          // const key = `${reg.regionKey}__${groupDivCode}`;
-          const { groupCode, groupName } = this.getDivGroupInfo(rawDivCode);
-          const key = `${reg.regionKey}__${groupCode}`;
-
-          if (!map.has(key)) {
-            const firstDept = (div.departments || [])[0] || {};
-
-            map.set(key, {
-              regionKey: reg.regionKey,
-              regionLabel: reg.regionLabel,
-              // ✅ show grouped code in table
-              // divisionCode: groupDivCode,
-              divisionCode: groupCode,
-              // 🔎 debug: keep list of which raw codes got merged into this group
-              _rawDivisionCodes: new Set(),
-
-              // ✅ match your table fields
-              ccLongCode: firstDept.ccLongCode || "", // used by jumpToCc
-              ccShortName: groupName || firstDept.ccShortName || "—",
-
-              empCount: 0,
-              allItemsCount: 0,
-              newItemsCount: 0,
-
-              diffAll: 0,
-              diffNew: 0,
-            });
-          }
-
-          const row = map.get(key);
-          row._rawDivisionCodes.add(String(rawDivCode || "").trim());
-
-          for (const dept of div.departments || []) {
-            // employees
-            const deptEmp =
-              typeof dept.empCount === "number"
-                ? dept.empCount
-                : Array.isArray(dept.employees)
-                ? dept.employees.length
-                : 0;
-
-            row.empCount += deptEmp;
-
-            // items
-            for (const item of dept.items || []) {
-              row.allItemsCount++;
-
-              const devReceivedDate =
-                item.devReceivedDate || item.dev_received_date || null;
-
-              const tag = this.tagRowByYear({ ...item, devReceivedDate });
-              if (tag === "new") row.newItemsCount++;
-            }
-
-            // (optional) if ccLongCode/ccShortName missing on firstDept, fill fallback from first dept that has values
-            if (!row.ccLongCode && dept.ccLongCode)
-              row.ccLongCode = dept.ccLongCode;
-            if (
-              (row.ccShortName === "—" || !row.ccShortName) &&
-              dept.ccShortName
-            )
-              row.ccShortName = dept.ccShortName;
-          }
-
-          row.diffAll = row.allItemsCount - row.empCount;
-          row.diffNew = row.newItemsCount - row.empCount;
-        }
-      }
-
-      const rows = Array.from(map.values()).map((r) => ({
-        ...r,
-        _rawDivisionCodes: Array.from(r._rawDivisionCodes),
-      }));
-      return rows;
-      // return Array.from(map.values());
-    },
-
-    filteredDivRows() {
-      const keyword = (this.surplusSearch || "").toLowerCase().trim();
-      const src = this.divBaseRows;
-
-      if (!keyword) return src;
-
-      return src.filter((d) => {
-        const region = (d.regionLabel || d.regionKey || "").toLowerCase();
-        const div = (d.divisionCode || "").toLowerCase();
-        const code = (d.ccLongCode || "").toLowerCase();
-        const name = (d.ccShortName || "").toLowerCase();
-
-        return (
-          region.includes(keyword) ||
-          div.includes(keyword) ||
-          code.includes(keyword) ||
-          name.includes(keyword)
-        );
-      });
-    },
-
     divBaseRowsNew() {
-      const map = new Map();
+      const rows = [];
 
       for (const reg of this.regions || []) {
         for (const div of reg.divisions || []) {
-          const key = `${reg.regionKey}__${div.divisionCode}`;
+          let empCount = 0;
+          let newItemsCount = 0;
 
-          if (!map.has(key)) {
-            const firstDept = (div.departments || [])[0] || {};
-
-            map.set(key, {
-              regionKey: reg.regionKey,
-              regionLabel: reg.regionLabel,
-              divisionCode: div.divisionCode,
-
-              // show 1st dept short name as division label (your idea)
-              divisionName:
-                firstDept.ccShortName || firstDept.ccLongCode || "—",
-
-              empCount: 0,
-              newItemsCount: 0,
-              diff: 0,
-            });
-          }
-
-          const row = map.get(key);
+          const firstDept = (div.departments || [])[0] || {};
+          const divisionName =
+            firstDept.ccShortName || firstDept.ccLongCode || "—";
+          const ccLongCode =
+            firstDept.ccLongCode || firstDept.cc_long_code || null;
 
           for (const dept of div.departments || []) {
-            // sum employees in division
             const deptEmp =
               typeof dept.empCount === "number"
                 ? dept.empCount
@@ -1146,36 +1031,54 @@ export default {
                 ? dept.employees.length
                 : 0;
 
-            row.empCount += deptEmp;
+            empCount += deptEmp;
 
-            // sum NEW devices in division (across all departments)
             for (const item of dept.items || []) {
               const devReceivedDate =
                 item.devReceivedDate || item.dev_received_date || null;
-
-              const tag = this.tagRowByYear({
-                ...item,
-                devReceivedDate,
-              });
-
-              if (tag === "new") row.newItemsCount++;
+              const tag = this.tagRowByYear({ ...item, devReceivedDate });
+              if (tag === "new") newItemsCount++;
             }
           }
 
-          row.diff = row.newItemsCount - row.empCount;
+          rows.push({
+            regionKey: reg.regionKey,
+            regionLabel: reg.regionLabel,
+            divisionCode: div.divisionCode,
+            divisionName,
+            ccLongCode,
+            empCount,
+            newItemsCount,
+            diff: newItemsCount - empCount,
+          });
         }
       }
 
-      return Array.from(map.values());
+      return rows;
     },
 
     filteredDivRowsNew() {
       const keyword = (this.surplusSearch || "").toLowerCase().trim();
-      const src = this.divBaseRowsNew;
 
-      if (!keyword) return src;
+      // start from base
+      let rows = this.divBaseRowsNew || [];
 
-      return src.filter((d) => {
+      // apply mode filter
+      if (this.divViewMode === "new-ge") {
+        rows = rows.filter((d) => (d.diff ?? 0) >= 0); // include =0 in GE
+      } else if (this.divViewMode === "new-lt") {
+        rows = rows.filter((d) => (d.diff ?? 0) < 0);
+      }
+
+      // (optional) if you reuse same table for all-ge/all-lt, handle them here too
+      // else ignore
+      // if (this.divViewMode === "all-ge") ...
+      // if (this.divViewMode === "all-lt") ...
+
+      // apply keyword filter
+      if (!keyword) return rows;
+
+      return rows.filter((d) => {
         const region = (d.regionLabel || d.regionKey || "").toLowerCase();
         const div = (d.divisionCode || "").toLowerCase();
         const name = (d.divisionName || "").toLowerCase();

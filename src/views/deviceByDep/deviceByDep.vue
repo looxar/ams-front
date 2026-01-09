@@ -485,7 +485,7 @@
               <v-list dense class="stat-list">
                 <v-list-item
                   class="summary-clickable stat-list-item"
-                  :class="{ 'summary-active': deptViewMode === 'all-ge' }"
+                  :class="{ 'summary-active': divViewMode === 'all-ge' }"
                   @click="setDivViewModeAndScroll('all-ge')"
                 >
                   <v-list-item-content>
@@ -502,7 +502,7 @@
 
                 <v-list-item
                   class="summary-clickable"
-                  :class="{ 'summary-active': deptViewMode === 'all-lt' }"
+                  :class="{ 'summary-active': divViewMode === 'all-lt' }"
                   @click="setDivViewModeAndScroll('all-lt')"
                 >
                   <v-list-item-content>
@@ -521,7 +521,7 @@
 
                 <v-list-item
                   class="summary-clickable"
-                  :class="{ 'summary-active': deptViewMode === 'new-ge' }"
+                  :class="{ 'summary-active': divViewMode === 'new-ge' }"
                   @click="setDivViewModeAndScroll('new-ge')"
                 >
                   <v-list-item-content>
@@ -541,7 +541,7 @@
 
                 <v-list-item
                   class="summary-clickable"
-                  :class="{ 'summary-active': deptViewMode === 'new-lt' }"
+                  :class="{ 'summary-active': divViewMode === 'new-lt' }"
                   @click="setDivViewModeAndScroll('new-lt')"
                 >
                   <v-list-item-content>
@@ -707,32 +707,22 @@
                   <tbody>
                     <!-- :key="d.divisionCode" -->
                     <tr
-                      v-for="d in filteredDivRows"
+                      v-for="d in filteredDivRowsNew"
                       :key="`${d.regionKey}-${d.divisionCode}`"
                       class="clickable-row"
                       @click="jumpToCc(d.ccLongCode)"
                     >
                       <td>{{ d.divisionCode }}</td>
-                      <td>{{ d.ccShortName }}</td>
+                      <td>{{ d.divisionName }}</td>
                       <td>{{ d.empCount }}</td>
-                      <td>
-                        {{
-                          divMetricKey === "all"
-                            ? d.allItemsCount
-                            : d.newItemsCount
-                        }}
-                      </td>
+                      <td>{{ d.newItemsCount }}</td>
                       <td
                         :class="{
-                          'green--text':
-                            (divMetricKey === 'all' ? d.diffAll : d.diffNew) >
-                            0,
-                          'red--text':
-                            (divMetricKey === 'all' ? d.diffAll : d.diffNew) <
-                            0,
+                          'green--text': d.diff > 0,
+                          'red--text': d.diff < 0,
                         }"
                       >
-                        {{ divMetricKey === "all" ? d.diffAll : d.diffNew }}
+                        {{ d.diff }}
                       </td>
                     </tr>
                   </tbody>
@@ -741,7 +731,12 @@
             </v-card-text>
           </v-card>
 
-          <v-card outlined class="mt-4" v-if="detailMode === 'emp'" ref="employeeSection">
+          <v-card
+            outlined
+            class="mt-4"
+            v-if="detailMode === 'emp'"
+            ref="employeeSection"
+          >
             <v-card-title class="subtitle-1 font-weight-bold">
               <v-icon left color="deep-orange">mdi-account-search</v-icon>
               {{ employeeViewLabel }}
@@ -864,7 +859,7 @@
                     {{
                       reg.regionKey === "E301-CEO"
                         ? "กลุ่มบริหาร กฟจ.CEO"
-                        : (reg.firstDept && reg.firstDept.ccShortName) || "—" 
+                        : (reg.firstDept && reg.firstDept.ccShortName) || "—"
                     }}
                     <!-- {{ (reg.firstDept && reg.firstDept.ccShortName) || "—" }} -->
                   </b>
