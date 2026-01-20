@@ -714,7 +714,9 @@
                       <td>{{ d.divisionCode }}</td>
                       <td>{{ d.divisionName }}</td>
                       <td>{{ d.empCount }}</td>
-                      <td v-if="divMetricKey === 'all'">{{ d.allItemsCount }}</td>
+                      <td v-if="divMetricKey === 'all'">
+                        {{ d.allItemsCount }}
+                      </td>
                       <td v-else>{{ d.newItemsCount }}</td>
                       <td
                         :class="{
@@ -821,13 +823,14 @@
             </v-col>
 
             <v-col cols="12" sm="2" md="1" align-self="center">
+              <!-- class="custom-button purple--text" -->
               <v-btn
                 elevation="3"
                 @click="checkQuotaByDep"
                 id="searchButton"
                 class="custom-button purple--text"
-                ><v-icon medium class="mr-2 v-purple"> mdi-magnify </v-icon
-                ><b>ตรวจสอบ</b>
+                ><v-icon medium class="mr-2 v-purple"> mdi-magnify </v-icon>
+                <h5 class="mt-2 text--darken-2"><b>ตรวจสอบ</b></h5>
               </v-btn>
             </v-col>
           </v-row>
@@ -1003,7 +1006,6 @@
                       <v-expansion-panel-header
                         :id="`dept-${dept.ccLongCode}`"
                         :class="{
-                          // 'jump-highlight': highlightedCc === dept.ccLongCode,
                           'jump-highlight':
                             highlightedCc === String(dept.ccLongCode).trim(),
                         }"
@@ -1034,6 +1036,16 @@
                             <span v-if="dept.unknownCount">
                               | ไม่ทราบ {{ dept.unknownCount }}</span
                             >
+                          </div>
+                          <!-- ✅ PDF button -->
+                          <div class="text-right">
+                            <v-btn
+                              icon
+                              color="red darken-1"
+                              @click.stop="openDeptPdf(dept)"
+                            >
+                              <v-icon size="28">mdi-file-pdf-box</v-icon>
+                            </v-btn>
                           </div>
                         </div>
                       </v-expansion-panel-header>

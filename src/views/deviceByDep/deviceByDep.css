@@ -130,7 +130,7 @@ i.v-icon.v-white {
 
 .header-grid {
   display: grid;
-  grid-template-columns: 30% 15% 20% 15% 15%;
+  grid-template-columns: 25% 15% 20% 15% 15% 5%;
   align-items: center;
   column-gap: 8px; /* optional */
 }
@@ -188,7 +188,7 @@ i.v-icon.v-white {
 }
 
 .v-btn.custom-button {
-  background: linear-gradient(to bottom, #ffffff 60%, purple 200%) !important;
+  background: linear-gradient(135deg, #ffffff, #e2a2ef, #9c27b0);
   color: white;
 }
 
@@ -216,7 +216,7 @@ i.v-icon.v-white {
 
   /* border-top: 4px solid #e2a2ef; */
   border-bottom: 4px solid #e2a2ef;
-    /* box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2),
+  /* box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2),
     6px 6px 12px rgba(156, 39, 176, 0.5); */
 }
 
@@ -445,7 +445,7 @@ i.v-icon.v-white {
 
 /* Tighten each row */
 .stat-list-item {
-  min-height: 32px !important;      /* default is taller */
+  min-height: 32px !important; /* default is taller */
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
@@ -465,7 +465,7 @@ i.v-icon.v-white {
 }
 
 .scroll-table-10 {
-  max-height: 320px; 
+  max-height: 320px;
   overflow-y: auto;
 }
 
@@ -496,7 +496,6 @@ i.v-icon.v-white {
   border-spacing: 0;
   width: 100%;
 }
-
 
 .scroll-table-10 thead th {
   position: sticky;

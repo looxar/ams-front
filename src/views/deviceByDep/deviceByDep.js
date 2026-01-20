@@ -1442,35 +1442,6 @@ export default {
       return "unknown";
     },
 
-    // getRegionKeyFromRow(row) {
-    //   const code = String(row.ccLongCode || "")
-    //     .toUpperCase()
-    //     .trim();
-    //   const short = String(row.ccShortName || "").trim();
-
-    //   // 1) E3010xxxxx -> E3010xx (first 6 chars)
-    //   if (code.startsWith("E3010")) {
-    //     return code.slice(0, 6); // e.g. E30102
-    //   }
-
-    //   // 2 & 3) E301x… (x ≠ 0): split by กฟจ
-    //   if (/^E301/.test(code)) {
-    //     const x = code.charAt(4);
-    //     if (x !== "0") {
-    //       // be lenient: กฟจ or กฟจ. with optional spaces
-    //       const hasGFJ = /กฟจ\.?/u.test(short);
-    //       return hasGFJ ? "E301X-GFJ" : "E301X-OTHER";
-    //     }
-    //     // if it’s somehow E3010 here, rule 1 would have caught it
-    //   }
-
-    //   // Others: E302… E303… -> first 4 chars
-    //   if (/^E30[2-9]/.test(code)) return code.slice(0, 4);
-
-    //   // Fallback: E### (first 4), else first 4 of whatever it is
-    //   const m = code.match(/^E\d{3}/);
-    //   return m ? m[0] : code.slice(0, 4);
-    // },
     getRegionKeyFromRow(row) {
       const code = String(row.ccLongCode || "")
         .toUpperCase()
@@ -1535,24 +1506,6 @@ export default {
       const m = code.match(/^E\d{3}/);
       return m ? m[0] : code.slice(0, 4);
     },
-
-    // getDivGroupCode(divisionCodeRaw) {
-    //   const code = String(divisionCodeRaw || "").trim();
-    //   if (!code) return "";
-
-    //   // handle later -> leave as-is
-    //   if (code.startsWith("E3010") || code.startsWith("E3000")) return code;
-
-    //   // ✅ broaden: group all E3xxx.. (E302..E309, E310.., E311.. etc.)
-    //   if (!code.startsWith("E3")) return code;
-
-    //   // if already ends with 01 -> standalone
-    //   if (code.endsWith("01")) return code;
-
-    //   // otherwise group to same code ending with 01
-    //   if (code.length < 2) return code;
-    //   return code.slice(0, -2) + "01";
-    // },
 
     getDivGroupInfo(divisionCodeRaw) {
       const code = String(divisionCodeRaw || "").trim();
@@ -1859,10 +1812,6 @@ export default {
       };
     },
 
-    // setDeptViewMode(mode) {
-    //   this.deptViewMode = mode;
-    // },
-
     setDeptViewModeAndScroll(mode) {
       this.detailMode = "dept";
       this.deptViewMode = mode;
@@ -1946,6 +1895,16 @@ export default {
 
     getEmpId(obj) {
       return obj.empId ?? obj.emp_id ?? obj.emId ?? obj.em_id ?? null;
+    },
+
+    openDeptPdf(dept) {
+      const ccLongCode = String(dept.ccLongCode).trim();
+
+      const url =
+        `${process.env.VUE_APP_BASE_URL}/api/devicebydept/pdf/department` +
+        `?ccLongCode=${encodeURIComponent(ccLongCode)}`;
+
+      window.open(url, "_blank");
     },
   },
 };

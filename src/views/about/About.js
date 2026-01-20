@@ -1326,17 +1326,20 @@ export default {
       console.log("genFixFormReport", this.formData);
       console.log("formData.inspector_name", this.formData.inspector_name);
       if (this.formData == null) {
+        console.log("formData is null : ",this.formData);
         this.alert = true;
         window.setInterval(() => {
           this.alert = false;
         }, 3000);
-      } else if (this.formData.problem == "" || this.formData.problem == undefined) {
-        this.showErrorProblem = true;
-      } else if (this.formData.inspector_name == "" || this.formData.inspector_name == undefined) {
-        this.showErrorInspector = true;
-      }else if (this.formData.dep_head_name == "" || this.formData.dep_head_name == undefined) {
-        this.showErrorDepHead = true;
-      }else {
+      } 
+      // else if (this.formData.problem == "" || this.formData.problem == undefined) {
+      //   this.showErrorProblem = true;
+      // } else if (this.formData.inspector_name == "" || this.formData.inspector_name == undefined) {
+      //   this.showErrorInspector = true;
+      // }else if (this.formData.dep_head_name == "" || this.formData.dep_head_name == undefined) {
+      //   this.showErrorDepHead = true;
+      // }
+      else {
         axios
           .post(
             // "http://localhost:8080/api/dev/redirectPdfProducer",
