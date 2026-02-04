@@ -985,6 +985,14 @@
                         | ไม่ทราบ {{ div.unknownCount }}</span
                       >
                     </div>
+                    <!-- ✅ Division PDF button -->
+                    <div class="text-left">
+                      <v-btn icon @click.stop.prevent="openDivisionPdf(div)">
+                        <v-badge content="DIV" color="green darken-2" overlap>
+                          <v-icon size="28"> mdi-file-pdf-box </v-icon>
+                        </v-badge>
+                      </v-btn>
+                    </div>
                   </div>
                 </v-expansion-panel-header>
 
@@ -1041,7 +1049,7 @@
                           <div class="text-right">
                             <v-btn
                               icon
-                              color="red darken-1"
+                              color="purple darken-1"
                               @click.stop="openDeptPdf(dept)"
                             >
                               <v-icon size="28">mdi-file-pdf-box</v-icon>

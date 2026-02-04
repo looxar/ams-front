@@ -99,7 +99,7 @@ export default {
           }
         // sort by name
         dedup.sort((a, b) =>
-          String(a.empName).localeCompare(String(b.empName))
+          String(a.empName).localeCompare(String(b.empName)),
         );
         map.set(k, dedup);
       }
@@ -180,7 +180,7 @@ export default {
         (this.itemsCC || []).map((cc) => [
           String(cc.ccLongCode).toUpperCase().trim(),
           cc,
-        ])
+        ]),
       );
       this.itemsCCByCode = itemsCCByCode;
 
@@ -217,7 +217,7 @@ export default {
 
         // Phase 2 (device rows)
         const divisionCode = this.getDivisionCodeFromCc(
-          ccLongCodeRaw || r.divisionCode || r.division_code
+          ccLongCodeRaw || r.divisionCode || r.division_code,
         );
 
         // If some CC appears only in device data but not in itemsCC,
@@ -317,7 +317,7 @@ export default {
                   }),
                 }))
                 .sort((a, b) =>
-                  String(a.ccLongCode).localeCompare(String(b.ccLongCode))
+                  String(a.ccLongCode).localeCompare(String(b.ccLongCode)),
                 );
 
               // recompute employees, unownedEmployees, empCount at division level
@@ -357,7 +357,7 @@ export default {
               };
             })
             .sort((a, b) =>
-              String(a.divisionCode).localeCompare(String(b.divisionCode))
+              String(a.divisionCode).localeCompare(String(b.divisionCode)),
             );
 
           // region-level employees/unowned aggregation same as before
@@ -972,7 +972,7 @@ export default {
 
     deptsSurplusNewButNotEveryoneHasNew() {
       return this.deptNewDeviceStats.filter(
-        (d) => d.diff > 0 && d.employeesWithoutNewCount > 0
+        (d) => d.diff > 0 && d.employeesWithoutNewCount > 0,
       );
     },
 
@@ -1405,7 +1405,7 @@ export default {
       try {
         // const response = await axios.get("http://localhost:8080/emp/getEmpAll");
         const response = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/api/dev/countDeviceByDep`
+          `${process.env.VUE_APP_BASE_URL}/api/dev/countDeviceByDep`,
         );
         this.deviceByDep = response.data.data.data;
 
@@ -1474,7 +1474,7 @@ export default {
             "Missing ccShortName for",
             row.ccLongCode,
             "-",
-            this.counter
+            this.counter,
           );
         }
 
@@ -1569,7 +1569,7 @@ export default {
       this.loadingEmp = true;
       try {
         const response = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/emp/getEmpAll2`
+          `${process.env.VUE_APP_BASE_URL}/emp/getEmpAll2`,
         );
         this.itemsEmp = response.data.data1.map((item) => ({
           empId: item[0],
@@ -1588,7 +1588,7 @@ export default {
       this.loadingCC = true;
       try {
         const response = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/cc/getAllCCOnlyUse`
+          `${process.env.VUE_APP_BASE_URL}/cc/getAllCCOnlyUse`,
         );
         // console.log("itemsCC123: ", response);
         this.itemsCC = response.data.costCenter.map((item) => ({
@@ -1627,7 +1627,7 @@ export default {
 
     updateCCFromEmp(modelEmp) {
       var result = this.itemsCC.find(
-        (item) => item.ccLongCode === modelEmp.ccLongCode
+        (item) => item.ccLongCode === modelEmp.ccLongCode,
       );
       this.modelCC = result;
     },
@@ -1646,7 +1646,7 @@ export default {
       regs.some((reg, ri) => {
         return reg.divisions.some((div, di) => {
           const i = div.departments.findIndex(
-            (d) => String(d.ccLongCode) === target
+            (d) => String(d.ccLongCode) === target,
           );
           if (i !== -1) {
             rIdx = ri;
@@ -1793,7 +1793,7 @@ export default {
       }
 
       const employeesById = new Map(
-        (this.itemsEmp || []).map((e) => [String(e.empId), e])
+        (this.itemsEmp || []).map((e) => [String(e.empId), e]),
       );
       const unownedEmployees = Array.from(unownedIds)
         .map((id) => employeesById.get(id))
@@ -1905,6 +1905,22 @@ export default {
         `?ccLongCode=${encodeURIComponent(ccLongCode)}`;
 
       window.open(url, "_blank");
+    },
+
+    openDivisionPdf(div) {
+      const divisionCode = String(div.divisionCode || "").trim();
+
+      if (!divisionCode) return; // กันพลาด
+
+      const url =
+        `${process.env.VUE_APP_BASE_URL}/api/devicebydept/pdf/division` +
+        `?divisionCode=${encodeURIComponent(divisionCode)}`;
+
+      const w = window.open(url, "_blank");
+      if (!w) {
+        // fallback: เปิดหน้าเดิม
+        window.location.href = url;
+      }
     },
   },
 };
