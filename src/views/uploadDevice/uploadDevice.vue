@@ -83,7 +83,22 @@
           </v-row>
         </v-form>
       </div>
-
+      <!-- <div v-if="missingForPreview.length" class="mb-2 pa-3 warning--text">
+        <strong>⚠️ Missing required columns:</strong>
+        <ul class="mb-0">
+          <li v-for="(h, i) in missingForPreview" :key="i">
+            {{ h }}
+          </li>
+        </ul>
+      </div> -->
+      <div v-if="missingForPreview.length" class="mb-2 pa-2" style="border:1px solid #f0ad4e;">
+  <b>⚠️ Missing required columns:</b>
+  <ul class="mb-0">
+    <li v-for="(h, i) in missingForPreview" :key="i">
+      {{ h }}
+    </li>
+  </ul>
+</div>
       <v-col cols="12" class="pa-0">
         <v-container fluid>
           <v-data-table
@@ -126,7 +141,7 @@
           </v-col>
         </v-row>
       </div>
-      
+
       <v-divider class="my-4"></v-divider>
       <div>
         <v-row>
@@ -163,10 +178,11 @@
       </div>
       <div>
         <!-- <v-row v-if="insertedCount"> -->
-          <v-row v-if="insertedCount !== undefined && insertedCount !== null">
+        <v-row v-if="insertedCount !== undefined && insertedCount !== null">
           <v-col cols="12">
             <div class="">
-              ทรัพย์สินที่เพิ่มเข้าไปใหม่ {{ insertedCount + insertedCount2 }} รายการ
+              ทรัพย์สินที่เพิ่มเข้าไปใหม่
+              {{ insertedCount + insertedCount2 }} รายการ
             </div>
           </v-col>
         </v-row>
@@ -175,7 +191,8 @@
         <v-row v-if="softDeletedCount">
           <v-col cols="12">
             <div class="">
-              ทรัพย์สินที่หายไปจากการอัพเดทไฟล์ครั้งล่าสุด {{ softDeletedCount }} รายการ
+              ทรัพย์สินที่หายไปจากการอัพเดทไฟล์ครั้งล่าสุด
+              {{ softDeletedCount }} รายการ
             </div>
           </v-col>
         </v-row>

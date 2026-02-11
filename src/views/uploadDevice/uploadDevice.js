@@ -105,6 +105,8 @@ export default {
       insertedCount: undefined,
       insertedCount2: undefined,
       softDeletedCount: undefined,
+      missingForPreview: [],
+      missingFromMap: [],
     };
   },
 
@@ -156,26 +158,21 @@ export default {
       reader.onload = (e) => {
         const data = new Uint8Array(e.target.result);
         try {
-          // console.log("check5", XLSX.utils);
           const workbook = XLSX.read(data, { type: "array" });
-          // console.log("check3", workbook);
 
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-
-          // console.log("check4", worksheet);
 
           const rows = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
             defval: "",
           });
-          // console.log("✅ rows", rows);
 
           const headerRowIndex = rows.findIndex((row) => {
             if (!Array.isArray(row)) return false;
 
             const nonEmptyCells = row.filter(
-              (col) => String(col).trim() !== ""
+              (col) => String(col).trim() !== "",
             ).length;
             if (nonEmptyCells === 0) return false; // 🚫 Skip completely empty rows
 
@@ -192,7 +189,7 @@ export default {
             console.log(
               "✅ Found header row at index",
               headerRowIndex,
-              headerRow
+              headerRow,
             );
             const HEADER_ROW_INDEX = headerRowIndex;
             const dataRows = rows.slice(headerRowIndex + 1);
@@ -200,17 +197,64 @@ export default {
             const DISPLAY_LIMIT = 1000;
             const DISPLAY_START = Math.max(
               0,
-              Math.floor(size / 2 - DISPLAY_LIMIT / 2)
+              Math.floor(size / 2 - DISPLAY_LIMIT / 2),
             );
 
             const headers = rows[HEADER_ROW_INDEX].map((h) => h.trim());
+
+            const headerSet = new Set(headers.filter(Boolean));
+
+            const expectedFromMap = Object.keys(this.headerMap);
+
+            const requiredForPreview = [
+              "สินทรัพย์",
+              "SNo.",
+              ["คำอธิบายของสินทรัพย์", "คำอธิบาย"], // OR
+              ["เลขที่ผลิตภัณฑ์", "Serial no.", "Serial No."], // OR
+              "Pers.No.",
+              "ศ.ต้นทุน",
+              "มูลค่าการได้มา",
+              "มูลค่าตามบัญชี",
+              "Cap.date",
+            ];
+
+            const missingFromMap = expectedFromMap.filter(
+              (h) => !headerSet.has(h),
+            );
+            const missingForPreview = requiredForPreview
+              .map((req) => {
+                // single required header
+                if (typeof req === "string") {
+                  return headerSet.has(req) ? null : req;
+                }
+
+                // OR-group: at least one must exist
+                const ok = req.some((h) => headerSet.has(h));
+                return ok ? null : `(${req.join(" OR ")})`;
+              })
+              .filter(Boolean);
+
+            if (missingFromMap.length) {
+              console.warn(
+                "⚠️ Missing headers (from headerMap):",
+                missingFromMap,
+              );
+            }
+            if (missingForPreview.length) {
+              console.warn(
+                "⚠️ Missing headers (used in preview mapping):",
+                missingForPreview,
+              );
+            }
+            // (optional) show which headers exist (useful for debugging)
+            // console.log("📌 Headers found:", headers);
 
             const allValidRecords = dataRows
               .filter((row) => {
                 const assetIndex = headers.findIndex((h) => h === "สินทรัพย์");
                 if (assetIndex === -1) return false;
                 const isEmptyRow = row.every(
-                  (cell) => String(cell).trim() === ""
+                  (cell) => String(cell).trim() === "",
                 );
                 const hasAssetValue =
                   row[assetIndex] && String(row[assetIndex]).trim() !== "";
@@ -226,7 +270,7 @@ export default {
 
             const previewRows = allValidRecords.slice(
               DISPLAY_START,
-              DISPLAY_START + DISPLAY_LIMIT
+              DISPLAY_START + DISPLAY_LIMIT,
             );
 
             const formatCapDate = (rawDate) => {
@@ -236,33 +280,21 @@ export default {
                 const thaiYear = parseInt(year) + 543;
                 return `${thaiYear}.${parseInt(month)}.${parseInt(day)}`;
               }
-              return ""; // or keep rawDate if you prefer
+              return "";
             };
 
             this.tableItems = previewRows.map((item) => ({
               devPeaNo: `${item["สินทรัพย์"] ?? ""}-${item["SNo."] ?? ""}`,
-              dev_description: item["คำอธิบายของสินทรัพย์"] ?? "",
+              dev_description:
+                item["คำอธิบายของสินทรัพย์"] ?? item["คำอธิบาย"] ?? "",
               dev_serial_no:
                 item["เลขที่ผลิตภัณฑ์"] ?? item["Serial no."] ?? "",
-              // dev_serial_no: item["Serial no."] ?? "",
               emp_id: item["Pers.No."] ?? "",
               cc_long_code: item["ศ.ต้นทุน"] ?? "",
               dev_received_price: item["มูลค่าการได้มา"] ?? "",
               dev_left_price: item["มูลค่าตามบัญชี"] ?? "",
               dev_received_date: formatCapDate(item["Cap.date"]),
             }));
-
-            // const headerMap = {
-            //   สินทรัพย์: "devPeaNo",
-            //   คำอธิบายของสินทรัพย์: "devDescription",
-            //   เลขที่ผลิตภัณฑ์: "devSerialNo",
-            //   "Cap.date": "devReceivedDate",
-            //   มูลค่าการได้มา: "devReceivedPrice",
-            //   ค่าเสื่อมสะสม: "devLeftPrice",
-            //   "ศ.ต้นทุน": "ccLongCode",
-            //   "Pers.No.": "empId",
-            //   ศูนย์กำไร: "ccLongCodeString",
-            // };
 
             const mappedRecords = allValidRecords.map((row) => {
               const mapped = {};
@@ -279,9 +311,8 @@ export default {
               mapped.dev_left_price = row["มูลค่าตามบัญชี"] ?? "";
 
               for (const [thaiKey, backendKey] of Object.entries(
-                this.headerMap
+                this.headerMap,
               )) {
-                // mapped[backendKey] = row[thaiKey] ?? "";
                 const value = row[thaiKey] ?? "";
 
                 if (backendKey === "devReceivedDate") {
@@ -290,12 +321,14 @@ export default {
                   backendKey !== "devPeaNo" &&
                   backendKey !== "dev_serial_no"
                 ) {
-                  // Prevent overwriting custom mapping above
                   mapped[backendKey] = value;
                 }
               }
               return mapped;
             });
+
+            this.missingFromMap = missingFromMap; // if you computed this
+            this.missingForPreview = missingForPreview; // ✅ this one for UI
 
             this.uploadItems = mappedRecords;
             this.isReadFileValid = allValidRecords.length > 0;
@@ -342,7 +375,7 @@ export default {
             // timeout: 120000,
             timeout: 30 * 60 * 1000,
             signal: this.uploadAbortController.signal,
-          }
+          },
         );
         const { success, message } = resp.data;
 
@@ -415,7 +448,7 @@ export default {
     async queryStep1() {
       try {
         const resp = await axios.post(
-          `${process.env.VUE_APP_BASE_URL}/api/dev/temp_concat`
+          `${process.env.VUE_APP_BASE_URL}/api/dev/temp_concat`,
         );
 
         // const { success, message } = resp.data;
@@ -445,7 +478,7 @@ export default {
       // Use result from Step 1
       try {
         const resp = await axios.post(
-          `${process.env.VUE_APP_BASE_URL}/api/dev/update_temp_device_type`
+          `${process.env.VUE_APP_BASE_URL}/api/dev/update_temp_device_type`,
         );
 
         // const { success, message } = resp.data;
@@ -474,7 +507,7 @@ export default {
     async queryStep3() {
       try {
         const resp = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/api/dev/check_no_match`
+          `${process.env.VUE_APP_BASE_URL}/api/dev/check_no_match`,
         );
 
         // const { success, message } = resp.data;
@@ -503,7 +536,7 @@ export default {
     async queryStep4() {
       try {
         const resp = await axios.post(
-          `${process.env.VUE_APP_BASE_URL}/api/dev/insert_update_master`
+          `${process.env.VUE_APP_BASE_URL}/api/dev/insert_update_master`,
         );
 
         // const { success, message } = resp.data;
