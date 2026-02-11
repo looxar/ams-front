@@ -541,9 +541,26 @@ export default {
                 ...item,
                 devReceivedDate,
               });
-
+              if (item.cc_long_code == "E311104000") {
+                console.log(
+                  "Found E311104000 in newItemsCount:",
+                  item.dev_pea_no,
+                  item._tag,
+                );
+              }
               return tag === "new";
             }).length;
+
+            //qwer
+            // for (const item of dept.items || []) {
+            //   if (item.cc_long_code == "E311104000") {
+            //     console.log(
+            //       "Found E311104000 item:",
+            //       item.dev_pea_no,
+            //       item._tag,
+            //     );
+            //   }
+            // }
 
             const diff = newItemsCount - empCount;
 
@@ -885,7 +902,7 @@ export default {
 
     deptNewDeviceStats() {
       const result = [];
-
+      const empKey = (v) => (v == null ? null : String(v).trim());
       for (const reg of this.regions || []) {
         for (const div of reg.divisions || []) {
           for (const dept of div.departments || []) {
@@ -917,12 +934,22 @@ export default {
               const ownerId =
                 item.empId ?? item.emp_id ?? item.emId ?? item.em_id ?? null;
 
-              if (ownerId != null) {
-                anyOwnerIds.add(String(ownerId));
-                if (tag === "new") {
-                  newItemsCount++;
-                  newOwnerIds.add(String(ownerId));
-                }
+              const ownerKey = empKey(ownerId);
+
+              // ✅ always count new device
+              if (tag === "new") {
+                newItemsCount++;
+              }
+
+              // // ✅ only sets care about ownerId
+              // if (ownerId != null && String(ownerId).trim() !== "") {
+              //   const key = String(ownerId).trim();
+              //   anyOwnerIds.add(key);
+              //   if (tag === "new") newOwnerIds.add(key);
+              // }
+              if (ownerKey) {
+                anyOwnerIds.add(ownerKey);
+                if (tag === "new") newOwnerIds.add(ownerKey);
               }
             }
 
@@ -930,10 +957,14 @@ export default {
             const diffAll = allItemsCount - empCount;
             const diffNew = newItemsCount - empCount;
 
-            // 🔹 employees in this department without NEW device
+            // // 🔹 employees in this department without NEW device
+            // const employeesWithoutNew = (dept.employees || []).filter((e) => {
+            //   const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
+            //   return !newOwnerIds.has(key);
+            // });
             const employeesWithoutNew = (dept.employees || []).filter((e) => {
-              const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
-              return !newOwnerIds.has(key);
+              const key = empKey(e.empId);
+              return key ? !newOwnerIds.has(key) : true; // if no empId, treat as without
             });
 
             // 🔹 employees in this department without ANY device
@@ -1391,6 +1422,12 @@ export default {
       this.debugEmployeePartition;
       this.loading = false;
 
+      for (const r of this.rows || []) {
+        if (r.cc_long_code == "E311104000") {
+          console.log("Found E311104000 row:", r.dev_pea_no, r._tag);
+        }
+      }
+
       console.log("[DEBUG after loadAllData]", {
         itemsEmp: this.itemsEmp?.length,
         rows: this.rows?.length,
@@ -1425,21 +1462,64 @@ export default {
       this.loading = false;
     },
 
-    beYear(dateStr) {
-      if (!dateStr) return null;
-      const parts = String(dateStr)
-        .trim()
-        .split(/[-./\s]+/);
-      const y = Number(parts[0]);
-      return Number.isFinite(y) ? y : null;
+    // beYear(dateStr) {
+    //   if (!dateStr) return null;
+    //   const parts = String(dateStr)
+    //     .trim()
+    //     .split(/[-./\s]+/);
+    //   const y = Number(parts[0]);
+    //   return Number.isFinite(y) ? y : null;
+    // },
+    beYear(v) {
+      if (v == null) return null;
+
+      // If it's a Date (usually AD), convert to BE
+      if (v instanceof Date && !isNaN(v)) {
+        return v.getFullYear() + 543;
+      }
+
+      // If it's a number (sometimes Excel serial or already a year)
+      if (typeof v === "number") {
+        // If looks like a year already
+        if (v >= 2400 && v <= 2700) return v; // BE year
+        if (v >= 1900 && v <= 2100) return v + 543; // AD year -> BE
+
+        // Otherwise treat as Excel serial date
+        const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+        const d = new Date(excelEpoch.getTime() + v * 86400000);
+        return isNaN(d) ? null : d.getUTCFullYear() + 543;
+      }
+
+      const s = String(v).trim();
+      if (!s) return null;
+
+      // BE dotted/slash/dash date: 2568.1.3 / 2568-1-3 / 2568/1/3
+      const m = s.match(/^(\d{4})[./-](\d{1,2})[./-](\d{1,2})$/);
+      if (m) return Number(m[1]); // ✅ return BE year directly
+
+      // If it's a plain year string: "2568" or "2025"
+      const y = Number(s);
+      if (!Number.isNaN(y)) {
+        if (y >= 2400 && y <= 2700) return y; // BE
+        if (y >= 1900 && y <= 2100) return y + 543; // AD -> BE
+      }
+
+      // fallback parse (AD) -> BE
+      const d = new Date(s);
+      if (!isNaN(d)) return d.getFullYear() + 543;
+
+      return null;
     },
 
     tagRowByYear(row) {
       const y = this.beYear(row.devReceivedDate);
-      if (y == null) return "unknown";
+      if (y == null) {
+        console.log("tagRowByYear: null year for row", row);
+        return "unknown";
+      }
       if (y >= 2561) return "new";
       if (y <= 2560) return "old";
-      return "unknown";
+      // return "unknown";
     },
 
     getRegionKeyFromRow(row) {
@@ -1483,7 +1563,7 @@ export default {
           .replace(/\s+/g, "")
           .trim();
 
-        console.log("shortNorm", shortNorm, "-", this.counter);
+        // console.log("shortNorm", shortNorm, "-", this.counter);
 
         // ---- Name-based recheck ----
         // const hasGFJ = shortNorm.includes("กฟจ");
@@ -1867,11 +1947,9 @@ export default {
 
       this.$nextTick(() => {
         const el =
-          this.$refs.divisionSection 
-          || // ✅ recommended: create a dedicated ref
+          this.$refs.divisionSection || // ✅ recommended: create a dedicated ref
           this.$refs.surplusSection || // fallback if you reuse same card
-          document.getElementById("division-section") 
-          ||
+          document.getElementById("division-section") ||
           document.getElementById("surplus-section");
 
         if (el) {

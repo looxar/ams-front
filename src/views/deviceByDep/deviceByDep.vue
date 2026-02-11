@@ -115,9 +115,7 @@
                     <!-- <v-list-item-title class="list-title text-body-2">
                       พนักงานที่มีคอมพิวเตอร์ใหม่ อย่างน้อย 1 เครื่อง
                     </v-list-item-title> -->
-                    <v-list-item-title
-                      class="list-title d-flex align-center"
-                    >
+                    <v-list-item-title class="list-title d-flex align-center">
                       พนักงานที่มีคอมพิวเตอร์ใหม่ อย่างน้อย 1 เครื่อง
                       <v-icon small class="ml-2" color="primary">
                         mdi-magnify
@@ -142,9 +140,7 @@
                     <!-- <v-list-item-title class="list-title text-body-2">
                       พนักงานที่ยังไม่มีคอมพิวเตอร์ใหม่ (≥ 2561)
                     </v-list-item-title> -->
-                    <v-list-item-title
-                      class="list-title d-flex align-center"
-                    >
+                    <v-list-item-title class="list-title d-flex align-center">
                       พนักงานที่ยังไม่มีคอมพิวเตอร์ใหม่ (≥ 2561)
                       <v-icon small class="ml-2" color="primary">
                         mdi-magnify
@@ -170,9 +166,7 @@
                     <!-- <v-list-item-title class="list-title text-body-2">
                       ในกลุ่มข้างต้น: ไม่มีคอมพิวเตอร์เลย (ทั้งใหม่และเก่า)
                     </v-list-item-title> -->
-                    <v-list-item-title
-                      class="list-title d-flex align-center"
-                    >
+                    <v-list-item-title class="list-title d-flex align-center">
                       ในกลุ่มข้างต้น: ไม่มีคอมพิวเตอร์เลย (ทั้งใหม่และเก่า)
                       <v-icon small class="ml-2" color="primary">
                         mdi-magnify
@@ -216,9 +210,7 @@
                     <!-- <v-list-item-title class="list-title text-body-2">
                       แผนกที่ “คอมทั้งหมด” ≥ พนักงาน
                     </v-list-item-title> -->
-                    <v-list-item-title
-                      class="list-title d-flex align-center"
-                    >
+                    <v-list-item-title class="list-title d-flex align-center">
                       แผนกที่ “คอมทั้งหมด” ≥ พนักงาน
                       <v-icon small class="ml-2" color="primary">
                         mdi-magnify
@@ -242,9 +234,7 @@
                     <!-- <v-list-item-title class="list-title text-body-2">
                       แผนกที่ “คอมทั้งหมด” &lt; พนักงาน
                     </v-list-item-title> -->
-                    <v-list-item-title
-                      class="list-title d-flex align-center"
-                    >
+                    <v-list-item-title class="list-title d-flex align-center">
                       แผนกที่ “คอมทั้งหมด” &lt; พนักงาน
                       <v-icon small class="ml-2" color="primary">
                         mdi-magnify
@@ -269,9 +259,7 @@
                     <!-- <v-list-item-title class="list-title text-body-2">
                       แผนกที่ “คอมพิวเตอร์ใหม่” ≥ พนักงาน
                     </v-list-item-title> -->
-                    <v-list-item-title
-                      class="list-title d-flex align-center"
-                    >
+                    <v-list-item-title class="list-title d-flex align-center">
                       แผนกที่ “คอมพิวเตอร์ใหม่” ≥ พนักงาน
                       <v-icon small class="ml-2" color="primary">
                         mdi-magnify
@@ -297,9 +285,7 @@
                     <!-- <v-list-item-title class="list-title text-body-2">
                       แผนกที่ “คอมพิวเตอร์ใหม่” &lt; พนักงาน
                     </v-list-item-title> -->
-                    <v-list-item-title
-                      class="list-title d-flex align-center"
-                    >
+                    <v-list-item-title class="list-title d-flex align-center">
                       แผนกที่ “คอมพิวเตอร์ใหม่” &lt; พนักงาน
                       <v-icon small class="ml-2" color="primary">
                         mdi-magnify
@@ -343,9 +329,7 @@
                     <!-- <v-list-item-title class="list-title text-body-2">
                       กอง/กฟฟ. ที่ “คอมทั้งหมด” ≥ พนักงาน
                     </v-list-item-title> -->
-                    <v-list-item-title
-                      class="list-title d-flex align-center"
-                    >
+                    <v-list-item-title class="list-title d-flex align-center">
                       กอง/กฟฟ. ที่ “คอมทั้งหมด” ≥ พนักงาน
                       <v-icon small class="ml-2" color="primary">
                         mdi-magnify
@@ -368,9 +352,7 @@
                     <!-- <v-list-item-title class="list-title text-body-2">
                       กอง/กฟฟ. ที่ “คอมทั้งหมด” &lt; พนักงาน
                     </v-list-item-title> -->
-                    <v-list-item-title
-                      class="list-title d-flex align-center"
-                    >
+                    <v-list-item-title class="list-title d-flex align-center">
                       กอง/กฟฟ. ที่ “คอมทั้งหมด” &lt; พนักงาน
                       <v-icon small class="ml-2" color="primary">
                         mdi-magnify
@@ -395,9 +377,7 @@
                     <!-- <v-list-item-title class="list-title text-body-2">
                       กอง/กฟฟ. ที่ “คอมใหม่ (≥ 2561)” ≥ พนักงาน
                     </v-list-item-title> -->
-                    <v-list-item-title
-                      class="list-title d-flex align-center"
-                    >
+                    <v-list-item-title class="list-title d-flex align-center">
                       กอง/กฟฟ. ที่ “คอมใหม่ (≥ 2561)” ≥ พนักงาน
                       <v-icon small class="ml-2" color="primary">
                         mdi-magnify
@@ -423,9 +403,7 @@
                     <!-- <v-list-item-title class="list-title text-body-2">
                       กอง/กฟฟ. ที่ “คอมใหม่ (≥ 2561)” &lt; พนักงาน
                     </v-list-item-title> -->
-                    <v-list-item-title
-                      class="list-title d-flex align-center"
-                    >
+                    <v-list-item-title class="list-title d-flex align-center">
                       กอง/กฟฟ. ที่ “คอมใหม่ (≥ 2561)” &lt; พนักงาน
                       <v-icon small class="ml-2" color="primary">
                         mdi-magnify
@@ -484,13 +462,8 @@
                       <th>รหัสแผนก</th>
                       <th>ชื่อแผนก</th>
                       <th>พนักงาน</th>
-                      <th>
-                        {{
-                          deptMetricKey === "all"
-                            ? "คอมทั้งหมด"
-                            : "คอมใหม่ (≥ 2561)"
-                        }}
-                      </th>
+                      <th>คอมทั้งหมด</th>
+                      <th>คอมใหม่ (≥ 2561)</th>
                       <th>
                         ส่วนต่าง ({{
                           deptMetricKey === "all"
@@ -512,11 +485,10 @@
                       <td>{{ d.ccShortName }}</td>
                       <td>{{ d.empCount }}</td>
                       <td>
-                        {{
-                          deptMetricKey === "all"
-                            ? d.allItemsCount
-                            : d.newItemsCount
-                        }}
+                        {{ d.allItemsCount }}
+                      </td>
+                      <td>
+                        {{ d.newItemsCount }}
                       </td>
                       <td
                         :class="{
@@ -948,9 +920,9 @@
                               <v-simple-table dense>
                                 <thead>
                                   <tr>
-                                    <th class="text-left">Emp ID</th>
-                                    <th class="text-left">Name</th>
-                                    <th class="text-left">Rank</th>
+                                    <th class="text-left">รหัสพนักงาน</th>
+                                    <th class="text-left">ชื่อพนักงาน</th>
+                                    <th class="text-left">ตำแหน่ง</th>
                                   </tr>
                                 </thead>
                                 <tbody>
