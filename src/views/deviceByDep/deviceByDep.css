@@ -389,7 +389,7 @@ i.v-icon.v-white {
 }
 
 .list-title {
-  font-size: 1rem;
+  font-size: 1.2rem !important;
   font-weight: 500;
 
   white-space: nowrap;
@@ -460,36 +460,14 @@ i.v-icon.v-white {
 }
 
 .scroll-table-10 .v-data-table__wrapper {
-  max-height: 320px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
 .scroll-table-10 {
-  max-height: 320px;
+  max-height: 400px;
   overflow-y: auto;
 }
-
-/* .scroll-table-10 thead th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: #fff;
-  border-bottom: 2px solid rgba(156, 39, 176, 0.4);
-} */
-
-/* center header text */
-/* .scroll-table-10 thead th {
-  text-align: center;
-  vertical-align: middle;
-
-  border-left: 2px solid rgba(156, 39, 176, 0.2);
-  border-right: 2px solid rgba(156, 39, 176, 0.2);
-
-  border-top: none;
-  border-bottom: none;
-
-  background: #fff;
-} */
 
 .scroll-table-10 table {
   border-collapse: separate;
@@ -501,6 +479,8 @@ i.v-icon.v-white {
   position: sticky;
   top: 0;
   z-index: 5;
+
+  font-size: 16px !important;
 
   /* center header text */
   text-align: center !important;
@@ -517,6 +497,12 @@ i.v-icon.v-white {
 }
 
 .scroll-table-10 tbody td {
+  font-size: 18px !important;
   text-align: center;
   vertical-align: middle;
+}
+
+.scroll-table-10 tbody td {
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
 }

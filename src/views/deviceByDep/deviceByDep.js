@@ -1731,7 +1731,7 @@ export default {
       if (this.$vuetify && this.$vuetify.goTo) {
         this.$vuetify.goTo(targetRef, {
           duration: 600,
-          offset: 80,
+          offset: 20,
           easing: "easeInOutCubic",
         });
       } else {
@@ -1812,30 +1812,6 @@ export default {
       };
     },
 
-    setDeptViewModeAndScroll(mode) {
-      this.detailMode = "dept";
-      this.deptViewMode = mode;
-
-      // scroll to the detailed table card (ref="surplusSection")
-      this.$nextTick(() => {
-        const el =
-          this.$refs.surplusSection ||
-          document.getElementById("surplus-section");
-
-        if (el) {
-          if (this.$vuetify && this.$vuetify.goTo) {
-            this.$vuetify.goTo(el, {
-              duration: 600,
-              offset: 80,
-              easing: "easeInOutCubic",
-            });
-          } else {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        }
-      });
-    },
-
     setEmployeeViewModeAndScroll(mode) {
       this.detailMode = "emp";
       this.employeeViewMode = mode;
@@ -1850,7 +1826,31 @@ export default {
           if (this.$vuetify && this.$vuetify.goTo) {
             this.$vuetify.goTo(el, {
               duration: 600,
-              offset: 80,
+              offset: 20,
+              easing: "easeInOutCubic",
+            });
+          } else {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      });
+    },
+
+    setDeptViewModeAndScroll(mode) {
+      this.detailMode = "dept";
+      this.deptViewMode = mode;
+
+      // scroll to the detailed table card (ref="surplusSection")
+      this.$nextTick(() => {
+        const el =
+          this.$refs.surplusSection ||
+          document.getElementById("surplus-section");
+
+        if (el) {
+          if (this.$vuetify && this.$vuetify.goTo) {
+            this.$vuetify.goTo(el, {
+              duration: 600,
+              offset: 20,
               easing: "easeInOutCubic",
             });
           } else {
@@ -1867,16 +1867,18 @@ export default {
 
       this.$nextTick(() => {
         const el =
-          this.$refs.divisionSection || // ✅ recommended: create a dedicated ref
+          this.$refs.divisionSection 
+          || // ✅ recommended: create a dedicated ref
           this.$refs.surplusSection || // fallback if you reuse same card
-          document.getElementById("division-section") ||
+          document.getElementById("division-section") 
+          ||
           document.getElementById("surplus-section");
 
         if (el) {
           if (this.$vuetify && this.$vuetify.goTo) {
             this.$vuetify.goTo(el, {
               duration: 600,
-              offset: 80,
+              offset: 20,
               easing: "easeInOutCubic",
             });
           } else {
