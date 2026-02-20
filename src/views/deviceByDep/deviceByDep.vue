@@ -41,7 +41,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--primary">
-                      {{ totalDeviceCounts.total }} เครื่อง
+                        {{ overall.totalRecords }} เครื่อง
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -54,7 +54,8 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--success">
-                      {{ totalDeviceCounts.new }} เครื่อง
+                      <!-- {{ totalDeviceCounts.new }} เครื่อง -->
+                        {{ overall.newCount }} เครื่อง
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -67,7 +68,8 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--warning">
-                      {{ totalDeviceCounts.oldOrUnknown }} เครื่อง
+                      <!-- {{ totalDeviceCounts.oldOrUnknown }} เครื่อง -->
+                        {{ overall.oldCount + overall.unknownCount }} เครื่อง
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -219,7 +221,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--primary">
-                      {{ totalDeptCounts.ge }} แผนก
+                        {{ deptCompareSummary.totalGeEmp }} แผนก
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -243,7 +245,8 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--warning">
-                      {{ totalDeptCounts.lt }} แผนก
+                      
+                      {{ deptCompareSummary.totalLtEmp }} แผนก
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -271,7 +274,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--success">
-                      {{ totalDeptCountsNew.ge }} แผนก
+                      {{ deptCompareSummary.newGeEmp }} แผนก
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -297,7 +300,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--cyan">
-                      {{ totalDeptCountsNew.lt }} แผนก
+                      {{ deptCompareSummary.newLtEmp }} แผนก
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -338,7 +341,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--primary">
-                      {{ totalDivisionCounts.ge }} หน่วยงาน
+                      {{ divisionCompareSummary.totalGeEmp }} หน่วยงาน
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -361,7 +364,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--warning">
-                      {{ totalDivisionCounts.lt }} หน่วยงาน
+                      {{ divisionCompareSummary.totalLtEmp }} หน่วยงาน
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -389,7 +392,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--success">
-                      {{ totalDivisionCountsNew.ge }} หน่วยงาน
+                      {{ divisionCompareSummary.newGeEmp }} หน่วยงาน
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -415,7 +418,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--cyan">
-                      {{ totalDivisionCountsNew.lt }} หน่วยงาน
+                      {{ divisionCompareSummary.newLtEmp }} หน่วยงาน
                     </div>
                   </v-list-item-action>
                 </v-list-item>

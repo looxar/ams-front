@@ -50,8 +50,6 @@ export default {
 
       highlightedCc: null,
 
-      overallSummary: null,
-
       surplusSearch: "",
       showBackToTop: false,
 
@@ -71,6 +69,7 @@ export default {
 
       counter: 0,
 
+      hideDctCn: true,
       // employees: [],
     };
   },
@@ -119,7 +118,6 @@ export default {
         if (!ccLongCodeRaw) continue;
         if (!cc.ccShortName) console.log("actually missing in itemsCC:", cc);
 
-        // 🔹 Region key from CC (reuse your existing logic)
         const regionKey = this.getRegionKeyFromRow({
           ccLongCode: ccLongCodeRaw,
           ccShortName: cc.ccShortName,
@@ -200,16 +198,11 @@ export default {
         const shortName =
           r.ccShortName || r.cc_short_name || ccMaster?.ccShortName || null;
 
-        // tag row by year (new / old / unknown)
         r._tag = this.tagRowByYear({
           ...r,
           devReceivedDate,
         });
 
-        // const regionKey = this.getRegionKeyFromRow({
-        //   ...r,
-        //   ccLongCode: ccLongCodeRaw,
-        // });
         const regionKey = this.getRegionKeyFromRow({
           ccLongCode: deptKey,
           ccShortName: shortName,
@@ -270,10 +263,6 @@ export default {
 
         const dept = div.departments.get(deptKey);
 
-        // region & division level counters
-        reg.totalRecords++;
-        div.totalRecords++;
-
         if (r._tag === "new") {
           reg.newCount++;
           div.newCount++;
@@ -293,311 +282,337 @@ export default {
           ...r,
           devReceivedDate,
         });
-
-        // employees for this dept already set from empByCC in phase 1
-        // we can compute unowned employees exactly as before later
       }
+      const HIDE_DEPT = "E301023060";
+      // ---- Phase 3: convert maps → arrays, compute unowned, sort, etc. ---
+      return (
+        Array.from(regionMap.values())
+          .map((reg) => {
+            const divisionsArr = Array.from(reg.divisions.values())
+              .map((div) => {
+                const deptsArr = Array.from(div.departments.values())
+                  // ✅ remove from display + all calculations after this
+                  .filter(
+                    (d) => !(this.hideDctCn && d.ccLongCode === HIDE_DEPT),
+                  )
+                  .map((d) => ({
+                    ...d,
+                    items: d.items.slice().sort((a, b) => {
+                      const kb = beKey(b.devReceivedDate);
+                      const ka = beKey(a.devReceivedDate);
+                      if (kb !== ka) return kb - ka;
+                      return String(b.deviceId).localeCompare(
+                        String(a.deviceId),
+                      );
+                    }),
+                  }))
+                  .sort((a, b) =>
+                    String(a.ccLongCode).localeCompare(String(b.ccLongCode)),
+                  );
 
-      // ---- Phase 3: convert maps → arrays, compute unowned, sort, etc. ----
-      // Here you can mostly reuse the bottom half of your old regions()
-      // (sorting departments by ccLongCode, computing regionLabel, empCount, etc.)
+                const seenDiv = new Set();
+                const divEmployees = [];
+                const seenUnownedDiv = new Set();
+                const divUnowned = [];
 
-      return Array.from(regionMap.values())
-        .map((reg) => {
-          const divisionsArr = Array.from(reg.divisions.values())
-            .map((div) => {
-              const deptsArr = Array.from(div.departments.values())
-                .map((d) => ({
-                  ...d,
-                  items: d.items.slice().sort((a, b) => {
-                    const kb = beKey(b.devReceivedDate);
-                    const ka = beKey(a.devReceivedDate);
-                    if (kb !== ka) return kb - ka;
-                    return String(b.deviceId).localeCompare(String(a.deviceId));
-                  }),
-                }))
-                .sort((a, b) =>
-                  String(a.ccLongCode).localeCompare(String(b.ccLongCode)),
-                );
+                let divTotal = 0,
+                  divNew = 0,
+                  divOld = 0,
+                  divUnknown = 0;
 
-              // recompute employees, unownedEmployees, empCount at division level
-              const seenDiv = new Set();
-              const divEmployees = [];
-              const seenUnownedDiv = new Set();
-              const divUnowned = [];
+                // helper: normalize employee key once
+                const empKey = (e) => {
+                  const empId = e?.empId ?? e?.emp_id ?? e?.empID ?? null;
+                  if (empId != null) return String(empId).trim();
 
-              for (const d of deptsArr) {
-                for (const e of d.employees || []) {
-                  const key =
-                    e.empId != null ? String(e.empId) : `n:${e.empName}`;
-                  if (!seenDiv.has(key)) {
-                    seenDiv.add(key);
-                    divEmployees.push(e);
+                  const empName = e?.empName ?? e?.emp_name ?? e?.name ?? "";
+                  return `n:${String(empName).trim()}`;
+                };
+
+                for (const d of deptsArr) {
+                  // ---- device counters ----
+                  const itemsLen = d.items?.length || 0;
+                  divTotal += itemsLen;
+                  divNew += d.newCount || 0;
+                  divOld += d.oldCount || 0;
+                  divUnknown += d.unknownCount || 0;
+
+                  // ---- employees (unique) ----
+                  for (const e of d.employees || []) {
+                    const key = empKey(e);
+                    if (!seenDiv.has(key)) {
+                      seenDiv.add(key);
+                      divEmployees.push(e);
+                    }
+                  }
+
+                  // ---- unowned employees (unique by id only) ----
+                  for (const e of d.unownedEmployees || []) {
+                    const id = e?.empId ?? e?.emp_id ?? e?.empID ?? null;
+                    if (id == null) continue;
+
+                    const key = String(id).trim();
+                    if (!seenUnownedDiv.has(key)) {
+                      seenUnownedDiv.add(key);
+                      divUnowned.push(e);
+                    }
                   }
                 }
-                for (const e of d.unownedEmployees || []) {
-                  const key = String(e.empId);
-                  if (!seenUnownedDiv.has(key)) {
-                    seenUnownedDiv.add(key);
-                    divUnowned.push(e);
-                  }
-                }
-              }
 
-              const firstDeptDiv = div.firstDept || deptsArr[0] || null;
+                // for (const d of deptsArr) {
+                //   divTotal += (d.items || []).length;
+                //   divNew += d.newCount || 0;
+                //   divOld += d.oldCount || 0;
+                //   divUnknown += d.unknownCount || 0;
+                // }
 
-              return {
-                ...div,
-                departments: deptsArr,
-                employees: divEmployees,
-                empCount: seenDiv.size,
-                unownedEmployees: divUnowned,
-                unownedCount: seenUnownedDiv.size,
-                firstDept: firstDeptDiv,
-              };
-            })
-            .sort((a, b) =>
-              String(a.divisionCode).localeCompare(String(b.divisionCode)),
-            );
+                // for (const d of deptsArr) {
+                //   for (const e of d.employees || []) {
+                //     const empId = e.empId ?? e.emp_id ?? e.empID ?? null;
+                //     const empName = e.empName ?? e.emp_name ?? e.name ?? "";
 
-          // region-level employees/unowned aggregation same as before
-          const seenReg = new Set();
-          const regEmployees = [];
-          const seenUnownedReg = new Set();
-          const regUnowned = [];
+                //     const key =
+                //       empId != null
+                //         ? String(empId).trim()
+                //         : `n:${String(empName).trim()}`;
 
-          for (const dv of divisionsArr) {
-            for (const e of dv.employees || []) {
-              const key = e.empId != null ? String(e.empId) : `n:${e.empName}`;
-              if (!seenReg.has(key)) {
-                seenReg.add(key);
-                regEmployees.push(e);
-              }
-            }
-            for (const e of dv.unownedEmployees || []) {
-              const key = String(e.empId);
-              if (!seenUnownedReg.has(key)) {
-                seenUnownedReg.add(key);
-                regUnowned.push(e);
-              }
-            }
-          }
+                //     if (!seenDiv.has(key)) {
+                //       seenDiv.add(key);
+                //       divEmployees.push(e);
+                //     }
+                //   }
 
-          const regionFirstDept =
-            reg.firstDept || divisionsArr[0]?.departments?.[0] || null;
-          const regionLabel = regionFirstDept
-            ? regionFirstDept.ccLongCode
-            : reg.regionKey;
+                //   for (const e of d.unownedEmployees || []) {
+                //     const empId = e.empId ?? e.emp_id ?? e.empID ?? null;
+                //     if (empId == null) continue;
 
-          // console.log("DEBUG region:", {
-          //   regionKey: reg.regionKey,
-          //   divisionsCount: divisionsArr.length,
-          //   firstDept: regionFirstDept,
-          //   firstDivision: divisionsArr[0],
-          //   regionFirstDept:
-          //     reg.firstDept || divisionsArr[0]?.departments?.[0] || null,
+                //     const key = String(empId).trim();
+                //     if (!seenUnownedDiv.has(key)) {
+                //       seenUnownedDiv.add(key);
+                //       divUnowned.push(e);
+                //     }
+                //   }
+                // }
 
-          //   secondDivision: divisionsArr[1],
-          //   regionSecondDept: divisionsArr[1]?.departments?.[1] || null,
-          // });
+                const firstDeptDiv = div.firstDept || deptsArr[0] || null;
 
-          return {
-            ...reg,
-            divisions: divisionsArr,
-            firstDept: regionFirstDept,
-            regionLabel,
-            employees: regEmployees,
-            empCount: seenReg.size,
-            unownedEmployees: regUnowned,
-            unownedCount: seenUnownedReg.size,
-          };
-        })
-        .sort((a, b) => String(a.regionKey).localeCompare(String(b.regionKey)));
-    },
+                // console.log("empCount: seenDiv.size,", seenDiv.size);
 
-    // allItemRichDepts() {
-    //   return this.regions.flatMap((reg) => reg.itemRichDepts || []);
-    // },
+                return {
+                  ...div,
+                  departments: deptsArr,
+                  totalRecords: divTotal,
+                  newCount: divNew,
+                  oldCount: divOld,
+                  unknownCount: divUnknown,
+                  employees: divEmployees,
+                  empCount: seenDiv.size,
+                  unownedEmployees: divUnowned,
+                  unownedCount: seenUnownedDiv.size,
+                  firstDept: firstDeptDiv,
+                };
+              })
+              .sort((a, b) =>
+                String(a.divisionCode).localeCompare(String(b.divisionCode)),
+              );
 
-    // allItemPoorDepts() {
-    //   return this.regions.flatMap((reg) => reg.itemPoorDepts || []);
-    // },
+            // region-level employees/unowned aggregation same as before
+            const seenReg = new Set();
+            const regEmployees = [];
+            const seenUnownedReg = new Set();
+            const regUnowned = [];
 
-    // ✅ ALL items (not only "new")
-    totalDeptCounts() {
-      let ge = 0; // departments where total items ≥ employees
-      let lt = 0; // departments where total items < employees
+            let regTotal = 0,
+              regNew = 0,
+              regOld = 0,
+              regUnknown = 0;
 
-      let totalSurplus = 0; // extra devices (all items)
-      let totalShortage = 0; // missing devices (all items)
+            // for (const dv of divisionsArr) {
+            //   regTotal += dv.totalRecords || 0;
+            //   regNew += dv.newCount || 0;
+            //   regOld += dv.oldCount || 0;
+            //   regUnknown += dv.unknownCount || 0;
+            // }
 
-      const deptDiffs = [];
+            // for (const dv of divisionsArr) {
+            //   for (const d of dv.departments || []) {
+            //     for (const e of d.employees || []) {
+            //       const empId = e.empId ?? e.emp_id ?? e.empID ?? null;
+            //       const empName = e.empName ?? e.emp_name ?? e.name ?? "";
 
-      for (const reg of this.regions || []) {
-        for (const div of reg.divisions || []) {
-          for (const dept of div.departments || []) {
-            // employee count in this dept
-            const empCount =
-              typeof dept.empCount === "number"
-                ? dept.empCount
-                : Array.isArray(dept.employees)
-                ? dept.employees.length
-                : 0;
+            //       const key =
+            //         empId != null
+            //           ? String(empId).trim()
+            //           : `n:${String(empName).trim()}`;
 
-            // 🔴 HERE is the difference from totalDeptCountsNew:
-            //     we use ALL items, not only tag === "new"
-            const allItemsCount = Array.isArray(dept.items)
-              ? dept.items.length
-              : 0;
+            //       if (!seenReg.has(key)) {
+            //         seenReg.add(key);
+            //         regEmployees.push(e);
+            //       }
+            //     }
 
-            const diff = allItemsCount - empCount;
+            //     for (const e of d.unownedEmployees || []) {
+            //       const empId = e.empId ?? e.emp_id ?? e.empID ?? null;
+            //       if (empId == null) continue;
 
-            if (diff >= 0) {
-              ge++;
-              totalSurplus += diff;
-            } else {
-              lt++;
-              totalShortage += -diff;
-            }
-
-            deptDiffs.push({
-              regionKey: reg.regionKey,
-              regionLabel: reg.regionLabel,
-              divisionCode: div.divisionCode,
-              ccLongCode: dept.ccLongCode,
-              ccShortName: dept.ccShortName,
-              empCount,
-              allItemsCount,
-              diff, // positive = surplus devices, negative = shortage
-            });
-          }
-        }
-      }
-
-      return {
-        ge, // แผนกที่ "คอมทั้งหมด" ≥ จำนวนพนักงาน
-        lt, // แผนกที่ "คอมทั้งหมด" < จำนวนพนักงาน
-        total: ge + lt, // จำนวนแผนกที่มีข้อมูลพนักงาน
-        totalSurplus, // รวมจำนวนเครื่องที่เกิน (จากทุกแผนก)
-        totalShortage, // รวมจำนวนเครื่องที่ขาด (จากทุกแผนก)
-        deptDiffs, // รายละเอียดรายแผนก (ถ้าจะเอาไปแสดงในตาราง)
-      };
-    },
-
-    totalDeviceCounts() {
-      let newCount = 0;
-      let oldCount = 0; // will include 'old'
-      let unknownCount = 0; // will include 'unknown'
-
-      for (const r of this.rows || []) {
-        const devReceivedDate =
-          r.devReceivedDate || r.dev_received_date || null;
-
-        // 👉 compute tag on the fly, same logic as regions()
-        const tag = this.tagRowByYear({
-          ...r,
-          devReceivedDate,
-        });
-
-        if (tag === "new") newCount++;
-        else if (tag === "old") oldCount++;
-        else unknownCount++;
-      }
-
-      return {
-        new: newCount,
-        old: oldCount, // only old
-        unknown: unknownCount, // only unknown
-        oldOrUnknown: oldCount + unknownCount, // combined group
-        total: this.rows.length,
-      };
-    },
-
-    totalDeptCountsNew() {
-      let ge = 0;
-      let lt = 0;
-
-      let totalSurplus = 0;
-      let totalShortage = 0;
-
-      const deptDiffs = [];
-
-      for (const reg of this.regions || []) {
-        for (const div of reg.divisions || []) {
-          for (const dept of div.departments || []) {
-            const empCount =
-              typeof dept.empCount === "number"
-                ? dept.empCount
-                : Array.isArray(dept.employees)
-                ? dept.employees.length
-                : 0;
-
-            // count only NEW devices in this department
-            const newItemsCount = (dept.items || []).filter((item) => {
-              const devReceivedDate =
-                item.devReceivedDate || item.dev_received_date || null;
-
-              const tag = this.tagRowByYear({
-                ...item,
-                devReceivedDate,
-              });
-              if (item.cc_long_code == "E311104000") {
-                console.log(
-                  "Found E311104000 in newItemsCount:",
-                  item.dev_pea_no,
-                  item._tag,
-                );
-              }
-              return tag === "new";
-            }).length;
-
-            //qwer
-            // for (const item of dept.items || []) {
-            //   if (item.cc_long_code == "E311104000") {
-            //     console.log(
-            //       "Found E311104000 item:",
-            //       item.dev_pea_no,
-            //       item._tag,
-            //     );
+            //       const key = String(empId).trim();
+            //       if (!seenUnownedReg.has(key)) {
+            //         seenUnownedReg.add(key);
+            //         regUnowned.push(e);
+            //       }
+            //     }
             //   }
             // }
 
-            const diff = newItemsCount - empCount;
+            for (const dv of divisionsArr) {
+              // ---- device counters ----
+              regTotal += dv.totalRecords || 0;
+              regNew += dv.newCount || 0;
+              regOld += dv.oldCount || 0;
+              regUnknown += dv.unknownCount || 0;
 
-            // classify department
-            if (diff >= 0) {
-              ge++;
-              totalSurplus += diff; // extra new devices
-            } else {
-              lt++;
-              totalShortage += -diff; // missing new devices
+              // ---- employee aggregation ----
+              for (const d of dv.departments || []) {
+                for (const e of d.employees || []) {
+                  const empId = e.empId ?? e.emp_id ?? e.empID ?? null;
+                  const empName = e.empName ?? e.emp_name ?? e.name ?? "";
+
+                  const key =
+                    empId != null
+                      ? String(empId).trim()
+                      : `n:${String(empName).trim()}`;
+
+                  if (!seenReg.has(key)) {
+                    seenReg.add(key);
+                    regEmployees.push(e);
+                  }
+                }
+
+                for (const e of d.unownedEmployees || []) {
+                  const empId = e.empId ?? e.emp_id ?? e.empID ?? null;
+                  if (empId == null) continue;
+
+                  const key = String(empId).trim();
+                  if (!seenUnownedReg.has(key)) {
+                    seenUnownedReg.add(key);
+                    regUnowned.push(e);
+                  }
+                }
+              }
             }
 
-            // keep per-department info (optional, but very useful)
-            deptDiffs.push({
-              regionKey: reg.regionKey,
-              regionLabel: reg.regionLabel,
-              divisionCode: div.divisionCode,
-              ccLongCode: dept.ccLongCode,
-              ccShortName: dept.ccShortName,
-              empCount,
-              newItemsCount,
-              diff, // positive = extra devices, negative = shortage
-            });
+            const regionFirstDept =
+              reg.firstDept || divisionsArr[0]?.departments?.[0] || null;
+            const regionLabel = regionFirstDept
+              ? regionFirstDept.ccLongCode
+              : reg.regionKey;
+
+            // console.log("DEBUG region:", {
+            //   regionKey: reg.regionKey,
+            //   divisionsCount: divisionsArr.length,
+            //   firstDept: regionFirstDept,
+            //   firstDivision: divisionsArr[0],
+            //   regionFirstDept:
+            //     reg.firstDept || divisionsArr[0]?.departments?.[0] || null,
+
+            //   secondDivision: divisionsArr[1],
+            //   regionSecondDept: divisionsArr[1]?.departments?.[1] || null,
+            // });
+
+            // return {
+            //   ...reg,
+            //   divisions: divisionsArr,
+            //   firstDept: regionFirstDept,
+            //   regionLabel,
+            //   employees: regEmployees,
+            //   empCount: seenReg.size,
+            //   unownedEmployees: regUnowned,
+            //   unownedCount: seenUnownedReg.size,
+            // };
+            return {
+              ...reg,
+              divisions: divisionsArr,
+              totalRecords: regTotal,
+              newCount: regNew,
+              oldCount: regOld,
+              unknownCount: regUnknown,
+              firstDept: regionFirstDept,
+              regionLabel,
+              employees: regEmployees,
+              empCount: seenReg.size,
+              unownedEmployees: regUnowned,
+              unownedCount: seenUnownedReg.size,
+            };
+          })
+          // ✅ REMOVE E301-CEO ONLY when "no employee AND no device"
+          .filter((reg) => {
+            if (reg.regionKey !== "E301-CEO") return true;
+
+            const hasDevice = (reg.totalRecords || 0) > 0; // your counter increments per device row
+            const hasEmployee = (reg.empCount || 0) > 0; // aggregated from empByCC
+
+            return hasDevice || hasEmployee;
+          })
+          .sort((a, b) =>
+            String(a.regionKey).localeCompare(String(b.regionKey)),
+          )
+      );
+    },
+
+    deptCompareSummary() {
+      let totalGeEmp = 0; // คอมทั้งหมด ≥ พนักงาน
+      let totalLtEmp = 0; // คอมทั้งหมด < พนักงาน
+      let newGeEmp = 0; // คอมใหม่ ≥ พนักงาน
+      let newLtEmp = 0; // คอมใหม่ < พนักงาน
+
+      for (const reg of this.regions || []) {
+        for (const div of reg.divisions || []) {
+          for (const dept of div.departments || []) {
+            const totalDevices = dept.items?.length || 0;
+            const newDevices = dept.newCount || 0;
+            const emp = dept.empCount || 0;
+
+            if (totalDevices >= emp) totalGeEmp++;
+            else totalLtEmp++;
+
+            if (newDevices >= emp) newGeEmp++;
+            else newLtEmp++;
           }
         }
       }
 
       return {
-        ge, // แผนกที่ "คอมใหม่" เพียงพอกับพนักงาน
-        lt, // แผนกที่ "คอมใหม่" ไม่พอ
-        total: ge + lt, // ทั้งหมดที่มีข้อมูลพนักงาน
-        // 👉 global gap metrics
-        totalSurplus, // รวมจำนวน "คอมใหม่ที่เกินจากจำนวนพนักงาน" ทุกแผนก
-        totalShortage, // รวมจำนวน "คอมใหม่ที่ขาดจากจำนวนพนักงาน" ทุกแผนก
-        // 👉 optional: per-department details (you can use in a table)
-        deptDiffs,
+        totalGeEmp,
+        totalLtEmp,
+        newGeEmp,
+        newLtEmp,
       };
+    },
+
+    divisionCompareSummary() {
+      let totalGeEmp = 0; // คอมทั้งหมด ≥ พนักงาน
+      let totalLtEmp = 0; // คอมทั้งหมด < พนักงาน
+      let newGeEmp = 0; // คอมใหม่ ≥ พนักงาน
+      let newLtEmp = 0; // คอมใหม่ < พนักงาน
+
+      for (const reg of this.regions || []) {
+        for (const div of reg.divisions || []) {
+          const totalDevices = div.totalRecords || 0;
+          const newDevices = div.newCount || 0;
+          const emp = div.empCount || 0;
+
+          // (optional) ignore empty divisions:
+          // if (emp === 0) continue;
+
+          if (totalDevices >= emp) totalGeEmp++;
+          else totalLtEmp++;
+
+          if (newDevices >= emp) newGeEmp++;
+          else newLtEmp++;
+        }
+      }
+
+      return { totalGeEmp, totalLtEmp, newGeEmp, newLtEmp };
     },
 
     // 1) All employees that appear in the region/division/department tree
@@ -713,163 +728,6 @@ export default {
       return rows;
     },
 
-    // totalDivisionCounts() {
-    //   let ge = 0; // divisions where total items ≥ employees
-    //   let lt = 0; // divisions where total items < employees
-
-    //   let totalSurplus = 0;
-    //   let totalShortage = 0;
-
-    //   const divDiffs = [];
-
-    //   for (const reg of this.regions || []) {
-    //     for (const div of reg.divisions || []) {
-    //       // ✅ aggregate inside this division
-    //       let empCount = 0;
-    //       let allItemsCount = 0;
-
-    //       for (const dept of div.departments || []) {
-    //         const deptEmp =
-    //           typeof dept.empCount === "number"
-    //             ? dept.empCount
-    //             : Array.isArray(dept.employees)
-    //             ? dept.employees.length
-    //             : 0;
-
-    //         const deptItems = Array.isArray(dept.items) ? dept.items.length : 0;
-
-    //         empCount += deptEmp;
-    //         allItemsCount += deptItems;
-    //       }
-
-    //       const diff = allItemsCount - empCount;
-
-    //       if (diff >= 0) {
-    //         ge++;
-    //         totalSurplus += diff;
-    //       } else {
-    //         lt++;
-    //         totalShortage += -diff;
-    //       }
-
-    //       divDiffs.push({
-    //         regionKey: reg.regionKey,
-    //         regionLabel: reg.regionLabel,
-    //         divisionCode: div.divisionCode,
-    //         empCount,
-    //         allItemsCount,
-    //         diff,
-    //       });
-    //     }
-    //   }
-
-    //   return {
-    //     ge, // divisions where "all devices" ≥ employees
-    //     lt, // divisions where "all devices" < employees
-    //     total: ge + lt,
-    //     totalSurplus,
-    //     totalShortage,
-    //     divDiffs,
-    //   };
-    // },
-
-    totalDivisionCounts() {
-      let ge = 0,
-        lt = 0,
-        totalSurplus = 0,
-        totalShortage = 0;
-
-      for (const d of this.divBaseRowsAll) {
-        if (d.diff >= 0) {
-          ge++;
-          totalSurplus += d.diff;
-        } else {
-          lt++;
-          totalShortage += -d.diff;
-        }
-      }
-
-      return {
-        ge,
-        lt,
-        total: ge + lt,
-        totalSurplus,
-        totalShortage,
-        divDiffs: this.divBaseRowsAll,
-      };
-    },
-
-    totalDivisionCountsNew() {
-      let ge = 0;
-      let lt = 0;
-
-      let totalSurplus = 0;
-      let totalShortage = 0;
-
-      const divDiffs = [];
-
-      for (const reg of this.regions || []) {
-        for (const div of reg.divisions || []) {
-          // ✅ aggregate inside this division
-          let empCount = 0;
-          let newItemsCount = 0;
-
-          for (const dept of div.departments || []) {
-            const deptEmp =
-              typeof dept.empCount === "number"
-                ? dept.empCount
-                : Array.isArray(dept.employees)
-                ? dept.employees.length
-                : 0;
-
-            empCount += deptEmp;
-
-            // count only NEW devices in this dept, then sum into division
-            for (const item of dept.items || []) {
-              const devReceivedDate =
-                item.devReceivedDate || item.dev_received_date || null;
-
-              const tag = this.tagRowByYear({ ...item, devReceivedDate });
-              if (tag === "new") newItemsCount++;
-            }
-          }
-
-          const diff = newItemsCount - empCount;
-
-          if (diff >= 0) {
-            ge++;
-            totalSurplus += diff;
-          } else {
-            lt++;
-            totalShortage += -diff;
-          }
-
-          divDiffs.push({
-            regionKey: reg.regionKey,
-            regionLabel: reg.regionLabel,
-            divisionCode: div.divisionCode,
-            empCount,
-            newItemsCount,
-            diff,
-          });
-        }
-      }
-
-      console.log("ge:", ge);
-      console.log("lt:", lt);
-      console.log("totalSurplus:", totalSurplus);
-      console.log("divDiffs:", divDiffs);
-
-      return {
-        ge, // divisions where "new devices" ≥ employees
-        lt, // divisions where "new devices" < employees
-        total: ge + lt,
-        totalSurplus,
-        totalShortage,
-        divDiffs,
-      };
-    },
-
     employeesWithoutAnyDevice() {
       const map = new Map();
 
@@ -900,6 +758,7 @@ export default {
       return Array.from(map.values());
     },
 
+    //สำหรับสลับ view
     deptNewDeviceStats() {
       const result = [];
       const empKey = (v) => (v == null ? null : String(v).trim());
@@ -1001,35 +860,35 @@ export default {
       return result;
     },
 
-    deptsSurplusNewButNotEveryoneHasNew() {
-      return this.deptNewDeviceStats.filter(
-        (d) => d.diff > 0 && d.employeesWithoutNewCount > 0,
-      );
-    },
+    // deptsSurplusNewButNotEveryoneHasNew() {
+    //   return this.deptNewDeviceStats.filter(
+    //     (d) => d.diff > 0 && d.employeesWithoutNewCount > 0,
+    //   );
+    // },
 
     deptsShortageNew() {
       return this.deptNewDeviceStats.filter((d) => d.diff < 0);
     },
 
-    filteredDeptsSurplusNew() {
-      const keyword = (this.surplusSearch || "").toLowerCase().trim();
-      const src = this.deptsSurplusNewButNotEveryoneHasNew || [];
+    // filteredDeptsSurplusNew() {
+    //   const keyword = (this.surplusSearch || "").toLowerCase().trim();
+    //   const src = this.deptsSurplusNewButNotEveryoneHasNew || [];
 
-      if (!keyword) return src;
+    //   if (!keyword) return src;
 
-      return src.filter((d) => {
-        const region = (d.regionLabel || d.regionKey || "").toLowerCase();
-        const div = (d.divisionCode || "").toLowerCase();
-        const code = (d.ccLongCode || "").toLowerCase();
-        const name = (d.ccShortName || "").toLowerCase();
-        return (
-          region.includes(keyword) ||
-          div.includes(keyword) ||
-          code.includes(keyword) ||
-          name.includes(keyword)
-        );
-      });
-    },
+    //   return src.filter((d) => {
+    //     const region = (d.regionLabel || d.regionKey || "").toLowerCase();
+    //     const div = (d.divisionCode || "").toLowerCase();
+    //     const code = (d.ccLongCode || "").toLowerCase();
+    //     const name = (d.ccShortName || "").toLowerCase();
+    //     return (
+    //       region.includes(keyword) ||
+    //       div.includes(keyword) ||
+    //       code.includes(keyword) ||
+    //       name.includes(keyword)
+    //     );
+    //   });
+    // },
 
     deptViewLabel() {
       switch (this.deptViewMode) {
@@ -1374,6 +1233,50 @@ export default {
         return !O.has(sid) && !N.has(sid);
       });
     },
+
+    overall() {
+      const totalRecords = this.regions.reduce(
+        (sum, r) => sum + (r.totalRecords || 0),
+        0,
+      );
+
+      const newCount = this.regions.reduce(
+        (sum, r) => sum + (r.newCount || 0),
+        0,
+      );
+
+      const oldCount = this.regions.reduce(
+        (sum, r) => sum + (r.oldCount || 0),
+        0,
+      );
+
+      const unknownCount = this.regions.reduce(
+        (sum, r) => sum + (r.unknownCount || 0),
+        0,
+      );
+
+      const empSet = new Set();
+      const unownedSet = new Set();
+
+      for (const r of this.regions) {
+        for (const e of r.employees || []) {
+          empSet.add(String(e.empId));
+        }
+        for (const e of r.unownedEmployees || []) {
+          unownedSet.add(String(e.empId));
+        }
+      }
+
+      return {
+        totalRecords,
+        newCount,
+        oldCount,
+        unknownCount,
+        empCount: empSet.size,
+        ownedEmpCount: empSet.size - unownedSet.size,
+        unownedCount: unownedSet.size,
+      };
+    },
   },
 
   watch: {
@@ -1418,7 +1321,7 @@ export default {
         this.loadEmpData(), // load employee data
         this.getCountDeviceByDep(), // load device data
       ]);
-      this.overallSummary = this.overall();
+
       this.debugEmployeePartition;
       this.loading = false;
 
@@ -1664,6 +1567,7 @@ export default {
         this.loadingEmp = false;
       }
     },
+
     async loadCCData() {
       this.loadingCC = true;
       try {
@@ -1803,7 +1707,8 @@ export default {
       } else if (this.detailMode === "emp") {
         targetRef = this.$refs.employeeSection;
       } else if (this.detailMode === "div") {
-        targetRef = this.$refs.divSection;
+        targetRef = this.$refs.divisionSection;
+        console.log("targetRef-div", targetRef);
       }
       if (!targetRef) return;
 
@@ -1834,62 +1739,6 @@ export default {
       if (!Number.isFinite(y)) return -Infinity;
       // BE compare works directly; bigger BE year = newer
       return y * 10000 + m * 100 + d; // e.g., 25680103
-    },
-
-    overall() {
-      //จำนวนคอมพิวเตอร์ทั้งหมด
-      const totalRecords = this.rows.length;
-      let newCount = 0,
-        oldCount = 0,
-        unknownCount = 0;
-      const ownerIds = new Set();
-
-      for (const r of this.rows) {
-        const devReceivedDate =
-          r.devReceivedDate || r.dev_received_date || null;
-        // const tag = r._tag; // 'new' | 'old' | 'unknown'
-        const tag = this.tagRowByYear({
-          ...r,
-          devReceivedDate,
-        });
-
-        if (tag === "new") newCount++;
-        else if (tag === "old") oldCount++;
-        else unknownCount++;
-
-        if (r.emId !== null && r.emId !== undefined) {
-          ownerIds.add(String(r.emId));
-        }
-      }
-
-      const allEmpIds = new Set();
-      for (const e of this.itemsEmp || []) {
-        allEmpIds.add(String(e.empId));
-      }
-
-      const unownedIds = new Set();
-      for (const id of allEmpIds) {
-        if (!ownerIds.has(id)) unownedIds.add(id);
-      }
-
-      const employeesById = new Map(
-        (this.itemsEmp || []).map((e) => [String(e.empId), e]),
-      );
-      const unownedEmployees = Array.from(unownedIds)
-        .map((id) => employeesById.get(id))
-        .filter(Boolean);
-
-      return {
-        totalRecords,
-        newCount,
-        oldCount,
-        unknownCount,
-
-        empCount: allEmpIds.size, // unique employees overall
-        ownedEmpCount: ownerIds.size, // employees that have at least 1 device
-        unownedCount: unownedIds.size,
-        unownedEmployees, // optional: the list
-      };
     },
 
     setEmployeeViewModeAndScroll(mode) {

@@ -12,6 +12,12 @@
             <i class="nc-icon nc-bullet-list-67"></i>
             <p>ตรวจสอบโควต้า</p>
           </sidebar-link>
+
+          <sidebar-link to="/deviceByDep">
+            <i class="nc-icon nc-tv-2 mt-2"></i>
+            <p class="mt-(2)">คอมพิวเตอร์</p>
+            <p class="mt-(2)">ตามโครงสร้าง</p>
+          </sidebar-link>
         </side-bar>
       </div>
     </v-navigation-drawer>
