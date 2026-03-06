@@ -155,12 +155,12 @@ export default {
           });
 
           if (headerRowIndex !== -1) {
-            const headerRow = rows[headerRowIndex];
-            console.log(
-              "✅ Found header row at index",
-              headerRowIndex,
-              headerRow
-            );
+            // const headerRow = rows[headerRowIndex];
+            // console.log(
+            //   "✅ Found header row at index",
+            //   headerRowIndex,
+            //   headerRow
+            // );
             const HEADER_ROW_INDEX = headerRowIndex;
             const dataRows = rows.slice(headerRowIndex + 1);
             const size = dataRows.length;
@@ -256,12 +256,13 @@ export default {
             headers: { "Content-Type": "multipart/form-data" },
           }
         );
-        const { inserted, updated } = resp.data;
 
+        const { inserted, updated } = resp.data;
+        
         this.uploadFinish = true;
         this.uploadFinishtime = dateService.formatDateToThai(new Date());
         this.uploadSuccess = true;
-
+        
         console.log("✅ Inserted:", inserted, "Updated:", updated);
 
       } catch (error) {

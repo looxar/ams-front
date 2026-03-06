@@ -1147,14 +1147,14 @@ export default {
 
       const sum = newCount + oldCount + noneCount;
 
-      console.log("[DEBUG employee partition]", {
-        totalEmployees,
-        new: newCount,
-        old: oldCount,
-        none: noneCount,
-        sum,
-        ok: sum === totalEmployees,
-      });
+      // console.log("[DEBUG employee partition]", {
+      //   totalEmployees,
+      //   new: newCount,
+      //   old: oldCount,
+      //   none: noneCount,
+      //   sum,
+      //   ok: sum === totalEmployees,
+      // });
 
       return {
         totalEmployees,
@@ -1333,17 +1333,17 @@ export default {
 
       for (const r of this.rows || []) {
         if (r.cc_long_code == "E311104000") {
-          console.log("Found E311104000 row:", r.dev_pea_no, r._tag);
+          // console.log("Found E311104000 row:", r.dev_pea_no, r._tag);
         }
       }
 
-      console.log("[DEBUG after loadAllData]", {
-        itemsEmp: this.itemsEmp?.length,
-        rows: this.rows?.length,
-        new: this.newDeviceOwners.length,
-        oldOnly: this.oldOnlyEmployees.length,
-        none: this.empNotOwnAnyDevice.length,
-      });
+      // console.log("[DEBUG after loadAllData]", {
+      //   itemsEmp: this.itemsEmp?.length,
+      //   rows: this.rows?.length,
+      //   new: this.newDeviceOwners.length,
+      //   oldOnly: this.oldOnlyEmployees.length,
+      //   none: this.empNotOwnAnyDevice.length,
+      // });
     },
 
     async getCountDeviceByDep() {
@@ -1361,7 +1361,7 @@ export default {
         //   yearMonth: item[2],
         // }));
         this.rows = this.deviceByDep;
-        console.log("getCountDeviceByDep-rows", this.rows.slice(100, 101));
+        // console.log("getCountDeviceByDep-rows", this.rows.slice(100, 101));
       } catch (error) {
         console.error(error);
       } finally {
@@ -1623,7 +1623,7 @@ export default {
     },
 
     jumpToCc(ccLongCode) {
-      console.log("jumpToCc:", ccLongCode);
+      // console.log("jumpToCc:", ccLongCode);
       if (!ccLongCode) return;
       const target = String(ccLongCode).trim();
 
@@ -1651,7 +1651,7 @@ export default {
       if (rIdx === -1) {
         // not found — handle as you like
         // this.$toast?.error('ไม่พบรหัสนี้');
-        console.log("ไม่พบรหัสนี้");
+        // console.log("ไม่พบรหัสนี้");
         return;
       }
 
@@ -1714,7 +1714,7 @@ export default {
         targetRef = this.$refs.employeeSection;
       } else if (this.detailMode === "div") {
         targetRef = this.$refs.divisionSection;
-        console.log("targetRef-div", targetRef);
+        // console.log("targetRef-div", targetRef);
       }
       if (!targetRef) return;
 
@@ -1798,7 +1798,7 @@ export default {
     setDivViewModeAndScroll(mode) {
       this.detailMode = "div"; // 👈 switch to division detail mode
       this.divViewMode = mode; // 👈 store which division view (surplus/shortage/etc.)
-      console.log("divViewMode set to:", this.divViewMode);
+      // console.log("divViewMode set to:", this.divViewMode);
 
       this.$nextTick(() => {
         const el =

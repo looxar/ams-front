@@ -1322,11 +1322,12 @@ export default {
     genFixFormReport() {
       this.showErrorProblem = false,
       this.showErrorInspector = false,
-      this.showErrorDepHead = false,
-      console.log("genFixFormReport", this.formData);
-      console.log("formData.inspector_name", this.formData.inspector_name);
+      this.showErrorDepHead = false;
+      // console.log("genFixFormReport", this.formData);
+      // console.log("formData.inspector_name", this.formData.inspector_name);
+
       if (this.formData == null) {
-        console.log("formData is null : ",this.formData);
+        // console.log("formData is null : ",this.formData);
         this.alert = true;
         window.setInterval(() => {
           this.alert = false;

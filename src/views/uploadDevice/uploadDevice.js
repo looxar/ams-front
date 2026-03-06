@@ -206,12 +206,12 @@ export default {
           });
 
           if (headerRowIndex !== -1) {
-            const headerRow = rows[headerRowIndex];
-            console.log(
-              "✅ Found header row at index",
-              headerRowIndex,
-              headerRow,
-            );
+            // const headerRow = rows[headerRowIndex];
+            // console.log(
+            //   "✅ Found header row at index",
+            //   headerRowIndex,
+            //   headerRow,
+            // );
             const HEADER_ROW_INDEX = headerRowIndex;
             const dataRows = rows.slice(headerRowIndex + 1);
             const size = dataRows.length;
@@ -258,13 +258,13 @@ export default {
 
                 const ok = keys.some((h) => headerSet.has(h));
 
-                const okHeader = keys.find((h) => headerSet.has(h));
-                console.log(
-                  "✅ For preview, found header for group",
-                  group,
-                  "->",
-                  okHeader,
-                );
+                // const okHeader = keys.find((h) => headerSet.has(h));
+                // console.log(
+                //   "✅ For preview, found header for group",
+                //   group,
+                //   "->",
+                //   okHeader,
+                // );
 
                 return ok ? null : `(${keys.join(" OR ")})`;
               })
@@ -506,10 +506,10 @@ export default {
         this.insertedCount2 = result4.data.inserted_count2;
         this.softDeletedCount = result4.data.soft_deleted_count;
 
-        console.log("Step 4 done:", result4);
-        console.log("insertedCount:", this.insertedCount);
-        console.log("insertedCount2:", this.insertedCount2);
-        console.log("softDeletedCount:", this.softDeletedCount);
+        // console.log("Step 4 done:", result4);
+        // console.log("insertedCount:", this.insertedCount);
+        // console.log("insertedCount2:", this.insertedCount2);
+        // console.log("softDeletedCount:", this.softDeletedCount);
         // All steps done
 
         this.processLoading = false;
