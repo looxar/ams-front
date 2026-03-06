@@ -41,7 +41,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--primary">
-                        {{ overall.totalRecords }} เครื่อง
+                      {{ overall.totalRecords }} เครื่อง
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -55,7 +55,7 @@
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--success">
                       <!-- {{ totalDeviceCounts.new }} เครื่อง -->
-                        {{ overall.newCount }} เครื่อง
+                      {{ overall.newCount }} เครื่อง
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -69,7 +69,7 @@
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--warning">
                       <!-- {{ totalDeviceCounts.oldOrUnknown }} เครื่อง -->
-                        {{ overall.oldCount + overall.unknownCount }} เครื่อง
+                      {{ overall.oldCount + overall.unknownCount }} เครื่อง
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -221,7 +221,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--primary">
-                        {{ deptCompareSummary.totalGeEmp }} แผนก
+                      {{ deptCompareSummary.totalGeEmp }} แผนก
                     </div>
                   </v-list-item-action>
                 </v-list-item>
@@ -245,7 +245,6 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <div class="action-gradient action-gradient--warning">
-                      
                       {{ deptCompareSummary.totalLtEmp }} แผนก
                     </div>
                   </v-list-item-action>
@@ -438,6 +437,15 @@
             <v-card-title class="subtitle-1 font-weight-bold card-top-border">
               <v-icon left color="teal">mdi-view-list</v-icon>
               {{ deptViewLabel }}
+              <v-btn
+                small
+                color="success"
+                class="ml-2 mb-2"
+                @click="exportDeptToExcel"
+              >
+                <v-icon left>mdi-file-excel</v-icon>
+                Export Excel
+              </v-btn>
             </v-card-title>
 
             <v-card-text
@@ -451,6 +459,7 @@
                   prepend-inner-icon="mdi-magnify"
                   class="mb-0"
                 ></v-text-field>
+
                 <div class="mt-0">
                   <small class="grey--text">
                     คลิกที่แถวเพื่อเลื่อนไปยังรายละเอียดแผนกด้านล่าง

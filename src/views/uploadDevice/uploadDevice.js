@@ -107,6 +107,17 @@ export default {
       softDeletedCount: undefined,
       missingForPreview: [],
       missingFromMap: [],
+      headerAliases: {
+        dev_description: ["คำอธิบายของสินทรัพย์", "คำอธิบาย"],
+        dev_serial_no: ["เลขที่ผลิตภัณฑ์", "Serial no.", "Serial No."],
+        devPeaNo_asset: ["สินทรัพย์"],
+        devPeaNo_sno: ["SNo."],
+        emp_id: ["Pers.No."],
+        cc_long_code: ["ศ.ต้นทุน"],
+        dev_received_price: ["มูลค่าการได้มา"],
+        dev_left_price: ["มูลค่าตามบัญชี"],
+        dev_received_date: ["Cap.date"],
+      },
     };
   },
 
@@ -147,6 +158,7 @@ export default {
         // Optional: auto upload or validate here
       }
     },
+
     processReadFile() {
       this.readLoading = true;
       this.uploadFinish = false;
@@ -154,6 +166,15 @@ export default {
       this.alert = false;
 
       const reader = new FileReader();
+
+      const getFirstValue = (row, keys) => {
+        for (const key of keys) {
+          if (row[key] !== undefined && row[key] !== null && row[key] !== "") {
+            return row[key];
+          }
+        }
+        return "";
+      };
 
       reader.onload = (e) => {
         const data = new Uint8Array(e.target.result);
@@ -222,15 +243,30 @@ export default {
               (h) => !headerSet.has(h),
             );
             const missingForPreview = requiredForPreview
-              .map((req) => {
-                // single required header
-                if (typeof req === "string") {
-                  return headerSet.has(req) ? null : req;
-                }
+              // .map((req) => {
+              //   // single required header
+              //   if (typeof req === "string") {
+              //     return headerSet.has(req) ? null : req;
+              //   }
 
-                // OR-group: at least one must exist
-                const ok = req.some((h) => headerSet.has(h));
-                return ok ? null : `(${req.join(" OR ")})`;
+              //   // OR-group: at least one must exist
+              //   const ok = req.some((h) => headerSet.has(h));
+              //   return ok ? null : `(${req.join(" OR ")})`;
+              // })
+              .map((group) => {
+                const keys = Array.isArray(group) ? group : [group];
+
+                const ok = keys.some((h) => headerSet.has(h));
+
+                const okHeader = keys.find((h) => headerSet.has(h));
+                console.log(
+                  "✅ For preview, found header for group",
+                  group,
+                  "->",
+                  okHeader,
+                );
+
+                return ok ? null : `(${keys.join(" OR ")})`;
               })
               .filter(Boolean);
 
@@ -284,46 +320,84 @@ export default {
             };
 
             this.tableItems = previewRows.map((item) => ({
-              devPeaNo: `${item["สินทรัพย์"] ?? ""}-${item["SNo."] ?? ""}`,
-              dev_description:
-                item["คำอธิบายของสินทรัพย์"] ?? item["คำอธิบาย"] ?? "",
-              dev_serial_no:
-                item["เลขที่ผลิตภัณฑ์"] ?? item["Serial no."] ?? "",
-              emp_id: item["Pers.No."] ?? "",
-              cc_long_code: item["ศ.ต้นทุน"] ?? "",
-              dev_received_price: item["มูลค่าการได้มา"] ?? "",
-              dev_left_price: item["มูลค่าตามบัญชี"] ?? "",
-              dev_received_date: formatCapDate(item["Cap.date"]),
+              // devPeaNo: `${item["สินทรัพย์"] ?? ""}-${item["SNo."] ?? ""}`,
+              // dev_description:
+              //   item["คำอธิบายของสินทรัพย์"] ?? item["คำอธิบาย"] ?? "",
+              // dev_serial_no:
+              //   item["เลขที่ผลิตภัณฑ์"] ?? item["Serial no."] ?? "",
+              // emp_id: item["Pers.No."] ?? "",
+              // cc_long_code: item["ศ.ต้นทุน"] ?? "",
+              // dev_received_price: item["มูลค่าการได้มา"] ?? "",
+              // dev_left_price: item["มูลค่าตามบัญชี"] ?? "",
+              // dev_received_date: formatCapDate(item["Cap.date"]),
+              devPeaNo: `${getFirstValue(item, ["สินทรัพย์"])}-${getFirstValue(
+                item,
+                ["SNo."],
+              )}`,
+              dev_description: getFirstValue(item, [
+                "คำอธิบายของสินทรัพย์",
+                "คำอธิบาย",
+              ]),
+              dev_serial_no: getFirstValue(item, [
+                "เลขที่ผลิตภัณฑ์",
+                "Serial no.",
+                "Serial No.",
+              ]),
+              emp_id: getFirstValue(item, ["Pers.No."]),
+              cc_long_code: getFirstValue(item, ["ศ.ต้นทุน"]),
+              dev_received_price: getFirstValue(item, ["มูลค่าการได้มา"]),
+              dev_left_price: getFirstValue(item, ["มูลค่าตามบัญชี"]),
+              dev_received_date: formatCapDate(
+                getFirstValue(item, ["Cap.date"]),
+              ),
             }));
 
             const mappedRecords = allValidRecords.map((row) => {
               const mapped = {};
-              mapped["devPeaNo"] = `${row["สินทรัพย์"] ?? ""}-${
-                row["SNo."] ?? ""
-              }`.trim();
+              // mapped["devPeaNo"] = `${row["สินทรัพย์"] ?? ""}-${
+              //   row["SNo."] ?? ""
+              // }`.trim();
+              // mapped.dev_serial_no =
+              //   row["เลขที่ผลิตภัณฑ์"] ??
+              //   row["Serial no."] ??
+              //   row["Serial No."] ??
+              //   "";
+              // mapped.dev_left_price = row["มูลค่าตามบัญชี"] ?? "";
+              // for (const [thaiKey, backendKey] of Object.entries(
+              //   this.headerMap,
+              // )) {
+              //   const value = row[thaiKey] ?? "";
 
-              mapped.dev_serial_no =
-                row["เลขที่ผลิตภัณฑ์"] ??
-                row["Serial no."] ??
-                row["Serial No."] ??
-                "";
+              //   if (backendKey === "devReceivedDate") {
+              //     mapped[backendKey] = formatCapDate(value);
+              //   } else if (
+              //     backendKey !== "devPeaNo" &&
+              //     backendKey !== "dev_serial_no"
+              //   ) {
+              //     mapped[backendKey] = value;
+              //   }
+              // }
 
-              mapped.dev_left_price = row["มูลค่าตามบัญชี"] ?? "";
+              mapped.devPeaNo = `${getFirstValue(row, [
+                "สินทรัพย์",
+              ])}-${getFirstValue(row, ["SNo."])}`.trim();
+              mapped.devDescription = getFirstValue(row, [
+                "คำอธิบายของสินทรัพย์",
+                "คำอธิบาย",
+              ]);
+              mapped.dev_serial_no = getFirstValue(row, [
+                "เลขที่ผลิตภัณฑ์",
+                "Serial no.",
+                "Serial No.",
+              ]);
+              mapped.empId = getFirstValue(row, ["Pers.No."]);
+              mapped.ccLongCode = getFirstValue(row, ["ศ.ต้นทุน"]);
+              mapped.devReceivedPrice = getFirstValue(row, ["มูลค่าการได้มา"]);
+              mapped.devLeftPrice = getFirstValue(row, ["มูลค่าตามบัญชี"]);
+              mapped.devReceivedDate = formatCapDate(
+                getFirstValue(row, ["Cap.date"]),
+              );
 
-              for (const [thaiKey, backendKey] of Object.entries(
-                this.headerMap,
-              )) {
-                const value = row[thaiKey] ?? "";
-
-                if (backendKey === "devReceivedDate") {
-                  mapped[backendKey] = formatCapDate(value);
-                } else if (
-                  backendKey !== "devPeaNo" &&
-                  backendKey !== "dev_serial_no"
-                ) {
-                  mapped[backendKey] = value;
-                }
-              }
               return mapped;
             });
 

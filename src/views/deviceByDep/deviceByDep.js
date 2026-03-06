@@ -18,10 +18,16 @@ Vue.component("mdiHomeCity", mdiHomeCity);
 import { mdiAccountHardHat } from "@mdi/js";
 Vue.component("mdiAccountHardHat", mdiAccountHardHat);
 
+import { mdiFileExcel } from "@mdi/js";
+Vue.component("mdiFileExcel", mdiFileExcel);
+
 import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
 import axios from "axios";
 import BarChart from "@/components/BarChart.vue";
+
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 export default {
   name: "deviceByDep",
@@ -1850,6 +1856,45 @@ export default {
         // fallback: เปิดหน้าเดิม
         window.location.href = url;
       }
+    },
+
+    exportDeptToExcel() {
+      if (!this.filteredDeptRows || this.filteredDeptRows.length === 0) {
+        return;
+      }
+
+      const metricLabel =
+        this.deptMetricKey === "all"
+          ? "ส่วนต่าง (คอมทั้งหมด - พนักงาน)"
+          : "ส่วนต่าง (คอมใหม่ - พนักงาน)";
+
+      const data = this.filteredDeptRows.map((d) => ({
+        กลุ่มหน่วยงาน: d.divisionCode,
+        รหัสแผนก: d.ccLongCode,
+        ชื่อแผนก: d.ccShortName,
+        พนักงาน: d.empCount,
+        คอมทั้งหมด: d.allItemsCount,
+        "คอมใหม่ (≥ 2561)": d.newItemsCount,
+        [metricLabel]:
+          this.deptMetricKey === "all" ? d.diffAll : d.diffNew,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Department Data");
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+
+      const blob = new Blob([excelBuffer], {
+        type:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+      });
+
+      saveAs(blob, `Department_Report_${new Date().getTime()}.xlsx`);
     },
   },
 };
