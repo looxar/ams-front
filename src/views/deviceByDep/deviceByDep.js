@@ -1351,7 +1351,8 @@ export default {
       try {
         // const response = await axios.get("http://localhost:8080/emp/getEmpAll");
         const response = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/api/dev/countDeviceByDep`,
+          // `${process.env.VUE_APP_BASE_URL}/api/dev/countDeviceByDep`,
+          `${process.env.VUE_APP_BASE_URL}/api/public/dev/countDeviceByDep`,
         );
         this.deviceByDep = response.data.data.data;
 
@@ -1558,7 +1559,8 @@ export default {
       this.loadingEmp = true;
       try {
         const response = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/emp/getEmpAll2`,
+          // `${process.env.VUE_APP_BASE_URL}/emp/getEmpAll2`,
+          `${process.env.VUE_APP_BASE_URL}/api/public/emp/getEmpAll2`,
         );
         this.itemsEmp = response.data.data1.map((item) => ({
           empId: item[0],
@@ -1578,7 +1580,8 @@ export default {
       this.loadingCC = true;
       try {
         const response = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/cc/getAllCCOnlyUse`,
+          // `${process.env.VUE_APP_BASE_URL}/cc/getAllCCOnlyUse`,
+          `${process.env.VUE_APP_BASE_URL}/api/public/cc/getAllCCOnlyUse`,
         );
         // console.log("itemsCC123: ", response);
         this.itemsCC = response.data.costCenter.map((item) => ({
@@ -1836,7 +1839,8 @@ export default {
       const ccLongCode = String(dept.ccLongCode).trim();
 
       const url =
-        `${process.env.VUE_APP_BASE_URL}/api/devicebydept/pdf/department` +
+        // `${process.env.VUE_APP_BASE_URL}/api/devicebydept/pdf/department` +
+        `${process.env.VUE_APP_BASE_URL}/api/public/devicebydept/pdf/department` +
         `?ccLongCode=${encodeURIComponent(ccLongCode)}`;
 
       window.open(url, "_blank");
@@ -1848,7 +1852,8 @@ export default {
       if (!divisionCode) return; // กันพลาด
 
       const url =
-        `${process.env.VUE_APP_BASE_URL}/api/devicebydept/pdf/division` +
+        // `${process.env.VUE_APP_BASE_URL}/api/devicebydept/pdf/division` +
+        `${process.env.VUE_APP_BASE_URL}/api/public/devicebydept/pdf/division` +
         `?divisionCode=${encodeURIComponent(divisionCode)}`;
 
       const w = window.open(url, "_blank");

@@ -152,7 +152,7 @@ export default {
       try {
         // const response = await axios.get("http://localhost:8080/emp/getEmpAll");
         const response = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/emp/getEmpAll2`
+          `${process.env.VUE_APP_BASE_URL}/api/public/emp/getEmpAll2`
         );
         
         this.itemsEmp = response.data.data1.map((item) => ({
@@ -173,7 +173,7 @@ export default {
       try {
         // const response = await axios.get("http://localhost:8080/cc/getAllCCOnlyUse");
         const response = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/cc/getAllCCOnlyUse`
+          `${process.env.VUE_APP_BASE_URL}/api/public/cc/getAllCCOnlyUse`
         );
         // this.itemsCC = response.data.costCenter;
         this.itemsCC = response.data.costCenter.map((item) => ({
@@ -239,7 +239,7 @@ export default {
           await axios
             // .get("http://localhost:8080/api/dev/getDevice53unpageByccId", {
             .get(
-              `${process.env.VUE_APP_BASE_URL}/api/dev/getDevice53unpageByccId`,
+              `${process.env.VUE_APP_BASE_URL}/api/public/dev/getDevice53unpageByccId`,
               {
                 params,
               }
@@ -260,7 +260,7 @@ export default {
           await axios
             .get(
               // "http://localhost:8080/api/dev/getDevice53unpageByccIdOnly7Year",
-              `${process.env.VUE_APP_BASE_URL}/api/dev/getDevice53unpageByccIdOnly7Year`,
+              `${process.env.VUE_APP_BASE_URL}/api/public/dev/getDevice53unpageByccIdOnly7Year`,
               {
                 params,
               }
@@ -283,7 +283,7 @@ export default {
         };
         await axios
           // .get("http://localhost:8080/emp/getEmpByccLongCode", { params })
-          .get(`${process.env.VUE_APP_BASE_URL}/emp/getEmpByccLongCode`, {
+          .get(`${process.env.VUE_APP_BASE_URL}/api/public/emp/getEmpByccLongCode`, {
             params,
           })
           .then((resp3) => {

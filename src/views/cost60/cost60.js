@@ -148,7 +148,7 @@ export default {
       try {
         // const response = await axios.get("http://localhost:8080/emp/getEmpAll");
         const response = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/api/cost/cost60ByMonth`
+          `${process.env.VUE_APP_BASE_URL}/api/public/cost/cost60ByMonth`
         );
         this.records60ByMonth = response.data.data.data;
 
@@ -183,7 +183,7 @@ export default {
       try {
         // const response = await axios.get("http://localhost:8080/emp/getEmpAll");
         const response = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/api/cost/cost60ByUser`
+          `${process.env.VUE_APP_BASE_URL}/api/public/cost/cost60ByUser`
         );
         this.records60ByUser = response.data.data.data;
 

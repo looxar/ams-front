@@ -214,7 +214,7 @@ export default {
         formData.append("file", this.selectedFile);
 
         const resp = await axios.post(
-          `${process.env.VUE_APP_BASE_URL}/emp/upload_emp`,
+          `${process.env.VUE_APP_BASE_URL}/api/public/emp/upload_emp`,
           formData,
           {
             timeout: 30 * 60 * 1000,
@@ -254,7 +254,7 @@ export default {
     async fetchCCDB() {
       this.readLoading = true;
       try {
-        const resp = await axios.get(`${process.env.VUE_APP_BASE_URL}/cc/all`);
+        const resp = await axios.get(`${process.env.VUE_APP_BASE_URL}/api/public/cc/all`);
 
         this.tableItemsEmp = resp.data.map((item) => ({
           cc_long_code: item.cc_long_code,

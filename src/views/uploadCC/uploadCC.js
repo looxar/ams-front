@@ -248,7 +248,8 @@ export default {
         formData.append("file", this.selectedFile);
 
         const resp = await axios.post(
-          `${process.env.VUE_APP_BASE_URL}/cc/upload_cc`,
+          // `${process.env.VUE_APP_BASE_URL}/cc/upload_cc`,
+          `${process.env.VUE_APP_BASE_URL}/api/public/cc/upload_cc`,
           formData,
           {
             timeout: 30 * 60 * 1000,
@@ -289,7 +290,7 @@ export default {
       this.readLoading = true;
       try {
         const resp = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/cc/all`
+          `${process.env.VUE_APP_BASE_URL}/api/public/cc/all`
         );
 
 

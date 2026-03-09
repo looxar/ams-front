@@ -443,7 +443,7 @@ export default {
 
       try {
         const resp = await axios.post(
-          `${process.env.VUE_APP_BASE_URL}/api/dev/temp_upload`,
+          `${process.env.VUE_APP_BASE_URL}/api/public/dev/temp_upload`,
           this.uploadItems,
           {
             // timeout: 120000,
@@ -522,7 +522,7 @@ export default {
     async queryStep1() {
       try {
         const resp = await axios.post(
-          `${process.env.VUE_APP_BASE_URL}/api/dev/temp_concat`,
+          `${process.env.VUE_APP_BASE_URL}/api/public/dev/temp_concat`,
         );
 
         // const { success, message } = resp.data;
@@ -552,7 +552,7 @@ export default {
       // Use result from Step 1
       try {
         const resp = await axios.post(
-          `${process.env.VUE_APP_BASE_URL}/api/dev/update_temp_device_type`,
+          `${process.env.VUE_APP_BASE_URL}/api/public/dev/update_temp_device_type`,
         );
 
         // const { success, message } = resp.data;
@@ -581,7 +581,7 @@ export default {
     async queryStep3() {
       try {
         const resp = await axios.get(
-          `${process.env.VUE_APP_BASE_URL}/api/dev/check_no_match`,
+          `${process.env.VUE_APP_BASE_URL}/api/public/dev/check_no_match`,
         );
 
         // const { success, message } = resp.data;
@@ -610,7 +610,7 @@ export default {
     async queryStep4() {
       try {
         const resp = await axios.post(
-          `${process.env.VUE_APP_BASE_URL}/api/dev/insert_update_master`,
+          `${process.env.VUE_APP_BASE_URL}/api/public/dev/insert_update_master`,
         );
 
         // const { success, message } = resp.data;
